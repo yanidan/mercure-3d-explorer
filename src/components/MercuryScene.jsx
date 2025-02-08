@@ -31,14 +31,19 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
+    // Load Mercury texture
+    const textureLoader = new THREE.TextureLoader();
+    const mercuryTexture = textureLoader.load('/mercury-texture.jpg');
+
     // Create a more complex geometry for Mercury
     const mercuryGeometry = new THREE.SphereGeometry(2, 64, 64);
     
-    // Create a texture-like material with crater-like bumps
+    // Create a material with the Mercury texture
     const material = new THREE.MeshStandardMaterial({
-      color: 0x888888,
-      metalness: 0.7,
-      roughness: 0.3,
+      map: mercuryTexture,
+      metalness: 0.5,
+      roughness: 0.7,
+      bumpMap: mercuryTexture,
       bumpScale: 0.05,
     });
 
