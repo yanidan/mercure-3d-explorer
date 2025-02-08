@@ -30,13 +30,11 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // TODO: Add Mercury GLTF model here
-    // Example usage:
-    // const loader = new GLTFLoader();
-    // loader.load('path/to/mercury.gltf', (gltf) => {
-    //   scene.add(gltf.scene);
-    //   setIsLoading(false);
-    // });
+    const loader = new GLTFLoader();
+    loader.load('/model/boule.gltf', (gltf) => {
+      scene.add(gltf.scene);
+      setIsLoading(false);
+    });
 
     // Placeholder sphere for now
     const geometry = new THREE.SphereGeometry(2, 32, 32);
