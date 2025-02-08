@@ -31,38 +31,18 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Mercury geometry
+    // Mercury geometry with a material that mimics Mercury's appearance
     const geometry = new THREE.SphereGeometry(2, 64, 64);
-    const textureLoader = new THREE.TextureLoader();
-    
-    // Create a default material in case texture loading fails
-    const defaultMaterial = new THREE.MeshStandardMaterial({
-      color: 0x888888,
-      metalness: 0.5,
-      roughness: 0.7,
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x8B8B8B, // Gray color similar to Mercury
+      metalness: 0.7,
+      roughness: 0.5,
+      bumpScale: 0.02,
     });
 
-    const mercury = new THREE.Mesh(geometry, defaultMaterial);
+    const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
-    
-    // Load Mercury texture
-    textureLoader.load(
-      '/mercury-texture.jpg',
-      (texture) => {
-        mercury.material = new THREE.MeshStandardMaterial({
-          map: texture,
-          metalness: 0.5,
-          roughness: 0.7,
-        });
-        setIsLoading(false);
-      },
-      undefined,
-      (err) => {
-        console.error('Error loading texture:', err);
-        setError('Failed to load Mercury texture');
-        setIsLoading(false);
-      }
-    );
+    setIsLoading(false);
 
     // Stars background
     const starsGeometry = new THREE.BufferGeometry();
@@ -136,12 +116,6 @@ export const MercuryScene = () => {
       {isLoading && (
         <div className="loading-screen">
           <div className="text-2xl animate-pulse">Loading Mercury...</div>
-        </div>
-      )}
-      {error && (
-        <div className="loading-screen">
-          <div className="text-2xl text-red-500">{error}</div>
-          <div className="text-lg mt-2">Displaying fallback visualization</div>
         </div>
       )}
       <div className="mercury-overlay">
