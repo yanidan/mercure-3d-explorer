@@ -31,25 +31,23 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Mercury geometry with a material that mimics Mercury's appearance
+    // Create grid texture
+    const gridSize = 512;
+    const gridTexture = new THREE.CanvasTexture(createGridTexture(gridSize));
+
+    // Mercury geometry with a material that includes grid texture
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const material = new THREE.MeshStandardMaterial({
       color: 0x8B8B8B,
       metalness: 0.7,
       roughness: 0.5,
+      map: gridTexture,
       bumpScale: 0.02,
     });
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
     setIsLoading(false);
-
-    // Add grid helper
-    const size = 20;
-    const divisions = 20;
-    const gridHelper = new THREE.GridHelper(size, divisions, 0x444444, 0x222222);
-    gridHelper.position.y = -3;
-    scene.add(gridHelper);
 
     // Stars background
     const starsGeometry = new THREE.BufferGeometry();
@@ -145,6 +143,41 @@ export const MercuryScene = () => {
       }
     };
   }, []);
+
+  // Helper function to create grid texture
+  const createGridTexture = (size: number) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return canvas;
+
+    // Fill background
+    ctx.fillStyle = '#8B8B8B';
+    ctx.fillRect(0, 0, size, size);
+
+    // Draw grid
+    ctx.strokeStyle = '#666666';
+    ctx.lineWidth = 1;
+
+    const cellSize = size / 20; // 20 grid divisions
+
+    for (let i = 0; i <= size; i += cellSize) {
+      // Vertical lines
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, size);
+      ctx.stroke();
+
+      // Horizontal lines
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(size, i);
+      ctx.stroke();
+    }
+
+    return canvas;
+  };
 
   return (
     <div className="mercury-scene" ref={containerRef}>
