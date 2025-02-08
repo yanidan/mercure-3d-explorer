@@ -31,15 +31,56 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Create a sphere geometry
-    const geometry = new THREE.SphereGeometry(2, 32, 32);
+    // Create a more complex geometry for Mercury
+    const mercuryGeometry = new THREE.SphereGeometry(2, 64, 64);
+    
+    // Create a texture-like material with crater-like bumps
     const material = new THREE.MeshStandardMaterial({
       color: 0x888888,
       metalness: 0.7,
       roughness: 0.3,
+      bumpScale: 0.05,
     });
-    const sphere = new THREE.Mesh(geometry, material);
-    scene.add(sphere);
+
+    // Create displacement patterns for the surface
+    const displacementMap = new THREE.DataTexture(
+      new Float32Array(64 * 64).map(() => Math.random() * 0.1),
+      64,
+      64,
+      THREE.RedFormat,
+      THREE.FloatType
+    );
+    displacementMap.needsUpdate = true;
+    material.displacementMap = displacementMap;
+    material.displacementScale = 0.2;
+
+    // Create the Mercury mesh
+    const mercury = new THREE.Mesh(mercuryGeometry, material);
+
+    // Add some craters
+    const craterGeometry = new THREE.CircleGeometry(0.2, 32);
+    for (let i = 0; i < 15; i++) {
+      const craterMaterial = new THREE.MeshStandardMaterial({
+        color: 0x666666,
+        metalness: 0.6,
+        roughness: 0.4,
+      });
+      const crater = new THREE.Mesh(craterGeometry, craterMaterial);
+      
+      // Position craters randomly on the surface
+      const phi = Math.random() * Math.PI * 2;
+      const theta = Math.random() * Math.PI;
+      const radius = 2;
+      
+      crater.position.x = radius * Math.sin(theta) * Math.cos(phi);
+      crater.position.y = radius * Math.sin(theta) * Math.sin(phi);
+      crater.position.z = radius * Math.cos(theta);
+      
+      crater.lookAt(new THREE.Vector3(0, 0, 0));
+      mercury.add(crater);
+    }
+
+    scene.add(mercury);
     setIsLoading(false);
 
     // Camera position
@@ -48,7 +89,7 @@ export const MercuryScene = () => {
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-      sphere.rotation.y += 0.002;
+      mercury.rotation.y += 0.002;
       renderer.render(scene, camera);
     };
 
