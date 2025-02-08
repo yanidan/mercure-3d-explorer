@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export const MercuryScene = () => {
   const containerRef = useRef(null);
@@ -31,18 +31,16 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    const loader = new GLTFLoader();
-    loader.load('/model/boule.gltf', (gltf) => {
-      scene.add(gltf.scene);
-      setIsLoading(false);
-    });
-
-    // Placeholder sphere for now
+    // Create Mercury sphere
     const geometry = new THREE.SphereGeometry(2, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ color: 0x8B8B8B });
+    const texture = new THREE.TextureLoader().load('/mercury-texture.jpg');
+    const material = new THREE.MeshStandardMaterial({ 
+      map: texture,
+      metalness: 0.5,
+      roughness: 0.7
+    });
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
-    setIsLoading(false);
 
     // Camera position
     camera.position.z = 5;
@@ -50,11 +48,14 @@ export const MercuryScene = () => {
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-      mercury.rotation.y += 0.002;
+      if (mercury) {
+        mercury.rotation.y += 0.002;
+      }
       renderer.render(scene, camera);
     };
 
     animate();
+    setIsLoading(false);
 
     // Handle resize
     const handleResize = () => {
