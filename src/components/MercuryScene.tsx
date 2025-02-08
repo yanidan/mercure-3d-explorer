@@ -63,29 +63,55 @@ export const MercuryScene = () => {
     // Camera position
     camera.position.z = 5;
 
-    // Animation
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetRotationX = 0;
-    let targetRotationY = 0;
-
-    const handleMouseMove = (event: MouseEvent) => {
-      mouseX = (event.clientX - window.innerWidth / 2) / 100;
-      mouseY = (event.clientY - window.innerHeight / 2) / 100;
+    // Mouse controls
+    let isDragging = false;
+    let previousMousePosition = {
+      x: 0,
+      y: 0
     };
 
+    const handleMouseDown = (event: MouseEvent) => {
+      isDragging = true;
+      previousMousePosition = {
+        x: event.clientX,
+        y: event.clientY
+      };
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isDragging) return;
+
+      const deltaMove = {
+        x: event.clientX - previousMousePosition.x,
+        y: event.clientY - previousMousePosition.y
+      };
+
+      mercury.rotation.y += deltaMove.x * 0.005;
+      mercury.rotation.x += deltaMove.y * 0.005;
+
+      previousMousePosition = {
+        x: event.clientX,
+        y: event.clientY
+      };
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+    };
+
+    // Add event listeners
+    window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
 
     // Render loop
     const animate = () => {
       requestAnimationFrame(animate);
 
-      targetRotationX += (mouseX - targetRotationX) * 0.05;
-      targetRotationY += (mouseY - targetRotationY) * 0.05;
-
-      mercury.rotation.y += 0.005;
-      mercury.rotation.x = targetRotationY * 0.3;
-      mercury.rotation.z = targetRotationX * 0.3;
+      // Only auto-rotate when not being dragged
+      if (!isDragging) {
+        mercury.rotation.y += 0.002;
+      }
 
       renderer.render(scene, camera);
     };
@@ -103,7 +129,9 @@ export const MercuryScene = () => {
 
     // Cleanup
     return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('resize', handleResize);
       if (containerRef.current) {
         containerRef.current.removeChild(renderer.domElement);
