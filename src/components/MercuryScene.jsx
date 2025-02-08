@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export const MercuryScene = () => {
   const containerRef = useRef(null);
@@ -31,17 +31,16 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Load GLTF model
-    const loader = new GLTFLoader();
-    let mercuryModel;
-    
-    loader.load('/model/boule.gltf', (gltf) => {
-      mercuryModel = gltf.scene;
-      scene.add(mercuryModel);
-      setIsLoading(false);
-    }, undefined, (error) => {
-      console.error('An error occurred loading the GLTF model:', error);
+    // Create a sphere geometry
+    const geometry = new THREE.SphereGeometry(2, 32, 32);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x888888,
+      metalness: 0.7,
+      roughness: 0.3,
     });
+    const sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
+    setIsLoading(false);
 
     // Camera position
     camera.position.z = 5;
@@ -49,9 +48,7 @@ export const MercuryScene = () => {
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-      if (mercuryModel) {
-        mercuryModel.rotation.y += 0.002;
-      }
+      sphere.rotation.y += 0.002;
       renderer.render(scene, camera);
     };
 
