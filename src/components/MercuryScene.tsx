@@ -5,7 +5,8 @@ import * as THREE from 'three';
 export const MercuryScene = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [error, setError] = useState<string | null>(null);
+  const [stats] = useState({
     diameter: '4,879 km',
     orbitalPeriod: '88 days',
     temperature: '-180°C to 430°C',
@@ -34,19 +35,34 @@ export const MercuryScene = () => {
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const textureLoader = new THREE.TextureLoader();
     
-    // Load Mercury texture
-    const mercuryTexture = textureLoader.load('/mercury-texture.jpg', () => {
-      setIsLoading(false);
-    });
-    
-    const material = new THREE.MeshStandardMaterial({
-      map: mercuryTexture,
+    // Create a default material in case texture loading fails
+    const defaultMaterial = new THREE.MeshStandardMaterial({
+      color: 0x888888,
       metalness: 0.5,
       roughness: 0.7,
     });
 
-    const mercury = new THREE.Mesh(geometry, material);
+    const mercury = new THREE.Mesh(geometry, defaultMaterial);
     scene.add(mercury);
+    
+    // Load Mercury texture
+    textureLoader.load(
+      '/mercury-texture.jpg',
+      (texture) => {
+        mercury.material = new THREE.MeshStandardMaterial({
+          map: texture,
+          metalness: 0.5,
+          roughness: 0.7,
+        });
+        setIsLoading(false);
+      },
+      undefined,
+      (err) => {
+        console.error('Error loading texture:', err);
+        setError('Failed to load Mercury texture');
+        setIsLoading(false);
+      }
+    );
 
     // Stars background
     const starsGeometry = new THREE.BufferGeometry();
@@ -109,7 +125,9 @@ export const MercuryScene = () => {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
-      containerRef.current?.removeChild(renderer.domElement);
+      if (containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
     };
   }, []);
 
@@ -118,6 +136,12 @@ export const MercuryScene = () => {
       {isLoading && (
         <div className="loading-screen">
           <div className="text-2xl animate-pulse">Loading Mercury...</div>
+        </div>
+      )}
+      {error && (
+        <div className="loading-screen">
+          <div className="text-2xl text-red-500">{error}</div>
+          <div className="text-lg mt-2">Displaying fallback visualization</div>
         </div>
       )}
       <div className="mercury-overlay">
