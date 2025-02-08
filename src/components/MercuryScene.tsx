@@ -34,7 +34,7 @@ export const MercuryScene = () => {
     // Mercury geometry with a material that mimics Mercury's appearance
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const material = new THREE.MeshStandardMaterial({
-      color: 0x8B8B8B, // Gray color similar to Mercury
+      color: 0x8B8B8B,
       metalness: 0.7,
       roughness: 0.5,
       bumpScale: 0.02,
@@ -43,6 +43,13 @@ export const MercuryScene = () => {
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
     setIsLoading(false);
+
+    // Add grid helper
+    const size = 20;
+    const divisions = 20;
+    const gridHelper = new THREE.GridHelper(size, divisions, 0x444444, 0x222222);
+    gridHelper.position.y = -3;
+    scene.add(gridHelper);
 
     // Stars background
     const starsGeometry = new THREE.BufferGeometry();
