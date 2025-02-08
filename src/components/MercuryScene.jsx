@@ -31,16 +31,17 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Create Mercury sphere
-    const geometry = new THREE.SphereGeometry(2, 32, 32);
-    const texture = new THREE.TextureLoader().load('/mercury-texture.jpg');
-    const material = new THREE.MeshStandardMaterial({ 
-      map: texture,
-      metalness: 0.5,
-      roughness: 0.7
+    // Load GLTF model
+    const loader = new GLTFLoader();
+    let mercuryModel;
+    
+    loader.load('/model/boule.gltf', (gltf) => {
+      mercuryModel = gltf.scene;
+      scene.add(mercuryModel);
+      setIsLoading(false);
+    }, undefined, (error) => {
+      console.error('An error occurred loading the GLTF model:', error);
     });
-    const mercury = new THREE.Mesh(geometry, material);
-    scene.add(mercury);
 
     // Camera position
     camera.position.z = 5;
@@ -48,14 +49,13 @@ export const MercuryScene = () => {
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-      if (mercury) {
-        mercury.rotation.y += 0.002;
+      if (mercuryModel) {
+        mercuryModel.rotation.y += 0.002;
       }
       renderer.render(scene, camera);
     };
 
     animate();
-    setIsLoading(false);
 
     // Handle resize
     const handleResize = () => {
