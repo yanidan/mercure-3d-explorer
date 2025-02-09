@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -62,9 +61,9 @@ export const MercuryScene = () => {
     scene.add(mercury);
 
     // Create Mars (slightly larger than Mercury)
-    const marsGeometry = new THREE.SphereGeometry(2.4, 64, 64); // Mars is about 1.2x larger than Mercury
+    const marsGeometry = new THREE.SphereGeometry(2.4, 64, 64);
     const marsMaterial = new THREE.MeshStandardMaterial({
-      color: 0xea384c, // Reddish color for Mars
+      color: 0xea384c,
       metalness: 0.5,
       roughness: 0.7,
     });
@@ -113,6 +112,11 @@ export const MercuryScene = () => {
         setIsZoomedOnMars(true);
         setStats(marsStats);
       } else {
+        const mercuryIntersects = raycaster.intersectObject(mercury);
+        if (mercuryIntersects.length > 0) {
+          setIsZoomedOnMars(false);
+          setStats(mercuryStats);
+        }
         isDragging = true;
         previousMousePosition = {
           x: event.clientX,
@@ -163,9 +167,9 @@ export const MercuryScene = () => {
 
       // Handle camera movement for zoom effect
       if (isZoomedOnMars) {
-        const targetPosition = new THREE.Vector3(8, 4, -5); // Closer zoom on Mars
+        const targetPosition = new THREE.Vector3(6, 2, -6);
         camera.position.lerp(targetPosition, 0.05);
-        camera.lookAt(mars.position);
+        camera.lookAt(new THREE.Vector3(8, 4, -10));
       } else {
         const defaultPosition = new THREE.Vector3(0, 0, 5);
         camera.position.lerp(defaultPosition, 0.05);
