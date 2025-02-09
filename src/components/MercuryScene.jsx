@@ -1,11 +1,15 @@
 
-import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { Suspense, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, useGLTF, Html } from '@react-three/drei';
+
+function MercuryModel() {
+  const { scene } = useGLTF("/mercure/scene.gltf");
+  return <primitive object={scene} />;
+}
 
 export const MercuryScene = () => {
-  const containerRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(true);
   const [stats] = useState({
     diameter: '4,879 km',
     orbitalPeriod: '88 days',
@@ -13,78 +17,30 @@ export const MercuryScene = () => {
     distance: '57.9M km'
   });
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    containerRef.current.appendChild(renderer.domElement);
-
-    // Add OrbitControls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.screenSpacePanning = false;
-    controls.minDistance = 3;
-    controls.maxDistance = 10;
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    directionalLight.position.set(5, 3, 5);
-    scene.add(directionalLight);
-
-    // Animation loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    };
-
-    animate();
-    setIsLoading(false);
-
-    // Handle resize
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (containerRef.current) {
-        containerRef.current.removeChild(renderer.domElement);
-      }
-      controls.dispose();
-    };
-  }, []);
-
   return (
-    <div className="mercury-scene" ref={containerRef} style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {isLoading && (
-        <div className="loading-screen">
-          <div className="text-2xl animate-pulse">Loading Scene...</div>
-        </div>
-      )}
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
+        <ambientLight intensity={0.5} />
+        <directionalLight intensity={2} position={[5, 3, 5]} />
+        <Suspense fallback={<Html center>Loading Model...</Html>}>
+          <MercuryModel />
+          <OrbitControls 
+            enableDamping
+            dampingFactor={0.05}
+            screenSpacePanning={false}
+            minDistance={3}
+            maxDistance={10}
+          />
+        </Suspense>
+      </Canvas>
+      
       <div className="mercury-overlay" style={{ position: 'absolute', top: '20px', left: '20px', color: 'white' }}>
         <h1 className="mercury-title text-4xl font-bold">Mercury</h1>
         <p className="text-muted-foreground mt-2">
           The smallest and innermost planet of the Solar System
         </p>
       </div>
+      
       <div className="stats-grid" style={{ 
         position: 'absolute', 
         bottom: '20px', 
