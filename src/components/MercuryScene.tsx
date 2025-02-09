@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -47,7 +46,6 @@ export const MercuryScene = () => {
 
     const textureLoader = new THREE.TextureLoader();
     const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
-      // On s'assure que l'image est chargée
       if (!texture.image || !texture.image.complete) {
         console.log("Image not yet loaded");
         return;
@@ -127,7 +125,7 @@ export const MercuryScene = () => {
           }
 
           const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
-          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x080808);
+          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x333333);
           
           for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
             colors[startIndex + k * 3] = color.r;
@@ -145,7 +143,6 @@ export const MercuryScene = () => {
 
     const photoTexture = textureLoader.load('/moon_baseColor.jpeg', () => {
       if (showHabitableZones) {
-        // Attend un court instant pour s'assurer que l'image est complètement chargée
         setTimeout(() => {
           analyzeHabitableZones(photoTexture, mercury);
         }, 100);
