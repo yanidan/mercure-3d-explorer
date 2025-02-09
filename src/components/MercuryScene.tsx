@@ -211,6 +211,7 @@ export const MercuryScene = () => {
     const mouse = new THREE.Vector2();
 
     let isDragging = false;
+    let isDraggingMars = false;
     let previousMousePosition = {
       x: 0,
       y: 0
@@ -221,35 +222,40 @@ export const MercuryScene = () => {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(mars);
+      const intersectsMars = raycaster.intersectObject(mars);
+      const intersectsMercury = raycaster.intersectObject(mercury);
 
-      if (intersects.length > 0) {
+      if (intersectsMars.length > 0) {
+        isDraggingMars = true;
         setIsZoomedOnMars(true);
         setStats(marsStats);
-      } else {
-        const mercuryIntersects = raycaster.intersectObject(mercury);
-        if (mercuryIntersects.length > 0) {
-          setIsZoomedOnMars(false);
-          setStats(mercuryStats);
-        }
+      } else if (intersectsMercury.length > 0) {
         isDragging = true;
-        previousMousePosition = {
-          x: event.clientX,
-          y: event.clientY
-        };
+        setIsZoomedOnMars(false);
+        setStats(mercuryStats);
       }
+
+      previousMousePosition = {
+        x: event.clientX,
+        y: event.clientY
+      };
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!isDragging) return;
-
       const deltaMove = {
         x: event.clientX - previousMousePosition.x,
         y: event.clientY - previousMousePosition.y
       };
 
-      mercury.rotation.y += deltaMove.x * 0.005;
-      mercury.rotation.x += deltaMove.y * 0.005;
+      if (isDragging) {
+        mercury.rotation.y += deltaMove.x * 0.005;
+        mercury.rotation.x += deltaMove.y * 0.005;
+      }
+
+      if (isDraggingMars) {
+        mars.rotation.y += deltaMove.x * 0.005;
+        mars.rotation.x += deltaMove.y * 0.005;
+      }
 
       previousMousePosition = {
         x: event.clientX,
@@ -258,11 +264,8 @@ export const MercuryScene = () => {
     };
 
     const handleMouseUp = () => {
-      if (isDragging) {
-        setIsZoomedOnMars(false);
-        setStats(mercuryStats);
-      }
       isDragging = false;
+      isDraggingMars = false;
     };
 
     window.addEventListener('mousedown', handleMouseDown);
@@ -274,6 +277,9 @@ export const MercuryScene = () => {
 
       if (!isDragging) {
         mercury.rotation.y += 0.002;
+      }
+      
+      if (!isDraggingMars) {
         mars.rotation.y += 0.003;
       }
 
