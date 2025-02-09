@@ -66,7 +66,7 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const chunkSize = 32; // Taille des chunks
+      const chunkSize = 256;
       const numChunksX = Math.floor(canvas.width / chunkSize);
       const numChunksY = Math.floor(canvas.height / chunkSize);
 
@@ -114,7 +114,7 @@ export const MercuryScene = () => {
         );
 
         let vertexColor;
-        if (chunkAverage.brightness > 100 && chunkAverage.brightness < 200) {
+        if (chunkAverage.brightness > 140 && chunkAverage.brightness < 160) {
           vertexColor = new THREE.Color(0x00ff00).multiplyScalar(2.5);
         } else {
           vertexColor = new THREE.Color(0x080808);
