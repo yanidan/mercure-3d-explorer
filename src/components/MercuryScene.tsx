@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -62,11 +61,10 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      // Réduire la taille des chunks pour plus de précision
-      const gridSize = 80; // Augmenté de 40 à 80 pour plus de précision
+      const gridSize = 100; // Augmenté à 100 pour plus de précision
       const cellWidth = canvas.width / gridSize;
       const cellHeight = canvas.height / gridSize;
-      const habitableThreshold = 12; // Seuil légèrement réduit pour compenser la plus petite taille des chunks
+      const habitableThreshold = 8; // Seuil réduit pour détecter plus de zones habitables
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
@@ -100,7 +98,7 @@ export const MercuryScene = () => {
           }
 
           const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
-          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2) : new THREE.Color(0x111111);
+          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x080808);
           
           for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
             colors[startIndex + k * 3] = color.r;
