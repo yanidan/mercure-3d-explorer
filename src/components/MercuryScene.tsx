@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -67,79 +66,44 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const gridSize = 100;
-      const cellWidth = canvas.width / gridSize;
-      const cellHeight = canvas.height / gridSize;
-      const colorSimilarityThreshold = 30;
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
       const colors = new Float32Array(positions.count * 3);
 
-      const getChunkAverageColor = (x: number, y: number) => {
-        const pixelData = ctx.getImageData(
-          Math.floor(x * cellWidth),
-          Math.floor(y * cellHeight),
-          Math.ceil(cellWidth),
-          Math.ceil(cellHeight)
-        ).data;
+      const pixelsPerVertex = Math.floor((data.length / 4) / positions.count);
 
-        let r = 0, g = 0, b = 0, count = 0;
-        for (let i = 0; i < pixelData.length; i += 4) {
-          r += pixelData[i];
-          g += pixelData[i + 1];
-          b += pixelData[i + 2];
-          count++;
-        }
-        return {
-          r: r / count,
-          g: g / count,
-          b: b / count
-        };
-      };
+      for (let vertexIndex = 0; vertexIndex < positions.count; vertexIndex++) {
+        const pixelStartIndex = vertexIndex * pixelsPerVertex * 4;
+        let totalBrightness = 0;
+        let samplesCount = 0;
 
-      const areColorsSimilar = (color1: {r: number, g: number, b: number}, color2: {r: number, g: number, b: number}) => {
-        const diff = Math.abs(color1.r - color2.r) +
-                    Math.abs(color1.g - color2.g) +
-                    Math.abs(color1.b - color2.b);
-        return diff < colorSimilarityThreshold;
-      };
-
-      const colorGrid: Array<Array<{r: number, g: number, b: number}>> = [];
-      for (let i = 0; i < gridSize; i++) {
-        colorGrid[i] = [];
-        for (let j = 0; j < gridSize; j++) {
-          colorGrid[i][j] = getChunkAverageColor(j, i);
-        }
-      }
-
-      for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-          const currentColor = colorGrid[i][j];
-          let isHabitable = false;
-
-          const neighbors = [];
-          if (i > 0) neighbors.push(colorGrid[i-1][j]);
-          if (i < gridSize-1) neighbors.push(colorGrid[i+1][j]);
-          if (j > 0) neighbors.push(colorGrid[i][j-1]);
-          if (j < gridSize-1) neighbors.push(colorGrid[i][j+1]);
-
-          for (const neighbor of neighbors) {
-            if (areColorsSimilar(currentColor, neighbor)) {
-              isHabitable = true;
-              break;
-            }
-          }
-
-          const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
-          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x080808);
-          
-          for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
-            colors[startIndex + k * 3] = color.r;
-            colors[startIndex + k * 3 + 1] = color.g;
-            colors[startIndex + k * 3 + 2] = color.b;
+        for (let p = 0; p < pixelsPerVertex; p++) {
+          const i = pixelStartIndex + p * 4;
+          if (i < data.length) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const brightness = (r + g + b) / 3;
+            totalBrightness += brightness;
+            samplesCount++;
           }
         }
+
+        const averageBrightness = totalBrightness / samplesCount;
+        
+        let vertexColor;
+        if (averageBrightness > 100 && averageBrightness < 200) {
+          vertexColor = new THREE.Color(0x00ff00).multiplyScalar(2.5);
+        } else {
+          vertexColor = new THREE.Color(0x080808);
+        }
+
+        colors[vertexIndex * 3] = vertexColor.r;
+        colors[vertexIndex * 3 + 1] = vertexColor.g;
+        colors[vertexIndex * 3 + 2] = vertexColor.b;
       }
 
       geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
