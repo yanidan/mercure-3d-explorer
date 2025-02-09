@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -273,10 +274,10 @@ export const MercuryScene = () => {
         </p>
       </div>
       <button
-        className="fixed top-4 right-4 bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+        className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
         onClick={() => setShowHabitableZones(!showHabitableZones)}
       >
-        {showHabitableZones ? 'Hide Habitable Zones' : 'Show Habitable Zones'}
+        {showHabitableZones ? 'Cacher zones habitables' : 'Montrer zones habitables'}
       </button>
       <div className="stats-grid">
         <div className="stat-card">
@@ -299,3 +300,4 @@ export const MercuryScene = () => {
     </div>
   );
 };
+
