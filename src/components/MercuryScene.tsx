@@ -45,7 +45,22 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
+    const geometry = new THREE.SphereGeometry(2, 64, 64);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x8B8B8B,
+      metalness: 0.7,
+      roughness: 0.5,
+      map: null,
+      bumpScale: 0.02,
+    });
+
+    const mercury = new THREE.Mesh(geometry, material);
+    scene.add(mercury);
+
     const textureLoader = new THREE.TextureLoader();
+    const photoTexture = textureLoader.load(currentTexture);
+    material.map = photoTexture;
+
     const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
       if (!texture.image || !texture.image.complete) {
         console.log("Image not yet loaded");
@@ -141,38 +156,6 @@ export const MercuryScene = () => {
       material.vertexColors = true;
       material.needsUpdate = true;
     };
-
-    const photoTexture = textureLoader.load(currentTexture);
-    let habitableOverlay: THREE.Mesh | null = null;
-
-    photoTexture.addEventListener('load', () => {
-      if (showHabitableZones) {
-        habitableOverlay = analyzeHabitableZones(photoTexture, mercury);
-      }
-    });
-
-    if (showHabitableZones && photoTexture.image) {
-      if (!habitableOverlay) {
-        habitableOverlay = analyzeHabitableZones(photoTexture, mercury);
-      }
-    } else if (!showHabitableZones && habitableOverlay) {
-      mercury.remove(habitableOverlay);
-      habitableOverlay.geometry.dispose();
-      habitableOverlay.material.dispose();
-      habitableOverlay = null;
-    }
-
-    const geometry = new THREE.SphereGeometry(2, 64, 64);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x8B8B8B,
-      metalness: 0.7,
-      roughness: 0.5,
-      map: photoTexture,
-      bumpScale: 0.02,
-    });
-
-    const mercury = new THREE.Mesh(geometry, material);
-    scene.add(mercury);
 
     if (showHabitableZones) {
       analyzeHabitableZones(photoTexture, mercury);
@@ -335,13 +318,13 @@ export const MercuryScene = () => {
       </div>
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-4">
         <button
-          className="bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+          className="bg-secondary/50 backdrop-blur-md text-white px-4 py-2 rounded-md shadow-lg hover:bg-secondary/80 transition-colors"
           onClick={() => setCurrentTexture(currentTexture === '/moon_baseColor.jpeg' ? '/mercure_map.jpg' : '/moon_baseColor.jpeg')}
         >
           {currentTexture === '/moon_baseColor.jpeg' ? 'Vue Standard' : 'Vue Topographique'}
         </button>
         <button
-          className="bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+          className="bg-secondary/50 backdrop-blur-md text-white px-4 py-2 rounded-md shadow-lg hover:bg-secondary/80 transition-colors"
           onClick={() => setShowHabitableZones(!showHabitableZones)}
         >
           {showHabitableZones ? 'Cacher zones habitables' : 'Montrer zones habitables'}
