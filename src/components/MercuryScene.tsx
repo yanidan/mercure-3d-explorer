@@ -62,10 +62,11 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const gridSize = 40;
+      // Réduire la taille des chunks pour plus de précision
+      const gridSize = 80; // Augmenté de 40 à 80 pour plus de précision
       const cellWidth = canvas.width / gridSize;
       const cellHeight = canvas.height / gridSize;
-      const habitableThreshold = 15;
+      const habitableThreshold = 12; // Seuil légèrement réduit pour compenser la plus petite taille des chunks
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
@@ -83,6 +84,8 @@ export const MercuryScene = () => {
             ctx.getImageData(x, y - cellHeight, 1, 1).data,
             ctx.getImageData(x + cellWidth, y + cellHeight, 1, 1).data,
             ctx.getImageData(x - cellWidth, y - cellHeight, 1, 1).data,
+            ctx.getImageData(x + cellWidth, y - cellHeight, 1, 1).data,
+            ctx.getImageData(x - cellWidth, y + cellHeight, 1, 1).data,
           ];
 
           let isHabitable = true;
