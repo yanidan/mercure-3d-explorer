@@ -66,36 +66,55 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+      const chunkSize = 32; // Taille des chunks
+      const numChunksX = Math.floor(canvas.width / chunkSize);
+      const numChunksY = Math.floor(canvas.height / chunkSize);
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
       const colors = new Float32Array(positions.count * 3);
 
-      const pixelsPerVertex = Math.floor((data.length / 4) / positions.count);
+      const getChunkAverage = (chunkX: number, chunkY: number) => {
+        const imageData = ctx.getImageData(
+          chunkX * chunkSize,
+          chunkY * chunkSize,
+          chunkSize,
+          chunkSize
+        );
+        const data = imageData.data;
+        let totalR = 0, totalG = 0, totalB = 0;
+        let count = 0;
 
-      for (let vertexIndex = 0; vertexIndex < positions.count; vertexIndex++) {
-        const pixelStartIndex = vertexIndex * pixelsPerVertex * 4;
-        let totalBrightness = 0;
-        let samplesCount = 0;
-
-        for (let p = 0; p < pixelsPerVertex; p++) {
-          const i = pixelStartIndex + p * 4;
-          if (i < data.length) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const brightness = (r + g + b) / 3;
-            totalBrightness += brightness;
-            samplesCount++;
-          }
+        for (let i = 0; i < data.length; i += 4) {
+          totalR += data[i];
+          totalG += data[i + 1];
+          totalB += data[i + 2];
+          count++;
         }
 
-        const averageBrightness = totalBrightness / samplesCount;
-        
+        return {
+          r: totalR / count,
+          g: totalG / count,
+          b: totalB / count,
+          brightness: (totalR + totalG + totalB) / (3 * count)
+        };
+      };
+
+      for (let vertexIndex = 0; vertexIndex < positions.count; vertexIndex++) {
+        const uv = new THREE.Vector2();
+        const uvAttribute = geometry.getAttribute('uv');
+        uv.fromBufferAttribute(uvAttribute, vertexIndex);
+
+        const chunkX = Math.floor(uv.x * numChunksX);
+        const chunkY = Math.floor(uv.y * numChunksY);
+
+        const chunkAverage = getChunkAverage(
+          Math.min(chunkX, numChunksX - 1),
+          Math.min(chunkY, numChunksY - 1)
+        );
+
         let vertexColor;
-        if (averageBrightness > 100 && averageBrightness < 200) {
+        if (chunkAverage.brightness > 100 && chunkAverage.brightness < 200) {
           vertexColor = new THREE.Color(0x00ff00).multiplyScalar(2.5);
         } else {
           vertexColor = new THREE.Color(0x080808);
