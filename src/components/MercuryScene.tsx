@@ -61,10 +61,10 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const gridSize = 100; // Augmenté à 100 pour plus de précision
+      const gridSize = 100;
       const cellWidth = canvas.width / gridSize;
       const cellHeight = canvas.height / gridSize;
-      const habitableThreshold = 8; // Seuil réduit pour détecter plus de zones habitables
+      const habitableThreshold = 8;
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
@@ -265,15 +265,15 @@ export const MercuryScene = () => {
     <div className="mercury-scene" ref={containerRef}>
       {isLoading && (
         <div className="loading-screen">
-          <div className="text-2xl animate-pulse">Loading Scene...</div>
+          <div className="text-2xl animate-pulse">Géneration de la scène...</div>
         </div>
       )}
       <div className="mercury-overlay">
-        <h1 className="mercury-title">{isZoomedOnMars ? "Mars" : "Mercury"}</h1>
+        <h1 className="mercury-title">{isZoomedOnMars ? "Mars" : "Mercure"}</h1>
         <p className="text-muted-foreground mt-2">
           {isZoomedOnMars 
-            ? "The Red Planet, fourth from the Sun"
-            : "The smallest and innermost planet of the Solar System"}
+            ? "La planète rouge, quatrième planète du système solaire"
+            : "La planète la plus petite et la plus proche du Soleil"}
         </p>
       </div>
       <button
@@ -284,19 +284,19 @@ export const MercuryScene = () => {
       </button>
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="text-sm text-muted-foreground">Diameter</div>
+          <div className="text-sm text-muted-foreground">Diamètre</div>
           <div className="text-lg font-semibold">{stats.diameter}</div>
         </div>
         <div className="stat-card">
-          <div className="text-sm text-muted-foreground">Orbital Period</div>
+          <div className="text-sm text-muted-foreground">Période Orbitale</div>
           <div className="text-lg font-semibold">{stats.orbitalPeriod}</div>
         </div>
         <div className="stat-card">
-          <div className="text-sm text-muted-foreground">Temperature Range</div>
+          <div className="text-sm text-muted-foreground">Intervale de Température</div>
           <div className="text-lg font-semibold">{stats.temperature}</div>
         </div>
         <div className="stat-card">
-          <div className="text-sm text-muted-foreground">Distance from Sun</div>
+          <div className="text-sm text-muted-foreground">Distance du Soleil</div>
           <div className="text-lg font-semibold">{stats.distance}</div>
         </div>
       </div>
