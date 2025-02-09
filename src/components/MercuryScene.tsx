@@ -24,26 +24,27 @@ export const MercuryScene = () => {
     containerRef.current.appendChild(renderer.domElement);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040);
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);
     scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
     // Create grid texture
-    const gridSize = 512;
-    const gridTexture = new THREE.CanvasTexture(createGridTexture(gridSize));
+      const gridSize = 512;
+      const textureLoader = new THREE.TextureLoader();
+      const photoTexture = textureLoader.load('/moon_baseColor.jpeg');
 
-    // Mercury geometry with a material that includes grid texture
-    const geometry = new THREE.SphereGeometry(2, 64, 64);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x8B8B8B,
-      metalness: 0.7,
-      roughness: 0.5,
-      map: gridTexture,
-      bumpScale: 0.02,
-    });
+      // Mercury geometry with a material that includes grid texture
+      const geometry = new THREE.SphereGeometry(2, 64, 64);
+      const material = new THREE.MeshStandardMaterial({
+        color: 0x8B8B8B,
+        metalness: 0.7,
+        roughness: 0.5,
+        map: photoTexture,
+        bumpScale: 0.02,
+      });
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
