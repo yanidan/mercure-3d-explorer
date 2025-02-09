@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 export const MercuryScene = () => {
   const containerRef = useRef(null);
@@ -17,25 +18,35 @@ export const MercuryScene = () => {
 
     // Scene setup
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     containerRef.current.appendChild(renderer.domElement);
 
+    // Add OrbitControls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 3;
+    controls.maxDistance = 10;
+
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040);
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
-
-    // Camera position
-    camera.position.z = 5;
 
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
+      controls.update();
       renderer.render(scene, camera);
     };
 
@@ -57,38 +68,49 @@ export const MercuryScene = () => {
       if (containerRef.current) {
         containerRef.current.removeChild(renderer.domElement);
       }
+      controls.dispose();
     };
   }, []);
 
   return (
-    <div className="mercury-scene" ref={containerRef}>
+    <div className="mercury-scene" ref={containerRef} style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       {isLoading && (
         <div className="loading-screen">
           <div className="text-2xl animate-pulse">Loading Scene...</div>
         </div>
       )}
-      <div className="mercury-overlay">
-        <h1 className="mercury-title">Mercury</h1>
+      <div className="mercury-overlay" style={{ position: 'absolute', top: '20px', left: '20px', color: 'white' }}>
+        <h1 className="mercury-title text-4xl font-bold">Mercury</h1>
         <p className="text-muted-foreground mt-2">
           The smallest and innermost planet of the Solar System
         </p>
       </div>
-      <div className="stats-grid">
+      <div className="stats-grid" style={{ 
+        position: 'absolute', 
+        bottom: '20px', 
+        left: '20px', 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(4, auto)',
+        gap: '1rem',
+        background: 'rgba(0,0,0,0.7)',
+        padding: '1rem',
+        borderRadius: '8px'
+      }}>
         <div className="stat-card">
           <div className="text-sm text-muted-foreground">Diameter</div>
-          <div className="text-lg font-semibold">{stats.diameter}</div>
+          <div className="text-lg font-semibold text-white">{stats.diameter}</div>
         </div>
         <div className="stat-card">
           <div className="text-sm text-muted-foreground">Orbital Period</div>
-          <div className="text-lg font-semibold">{stats.orbitalPeriod}</div>
+          <div className="text-lg font-semibold text-white">{stats.orbitalPeriod}</div>
         </div>
         <div className="stat-card">
           <div className="text-sm text-muted-foreground">Temperature Range</div>
-          <div className="text-lg font-semibold">{stats.temperature}</div>
+          <div className="text-lg font-semibold text-white">{stats.temperature}</div>
         </div>
         <div className="stat-card">
           <div className="text-sm text-muted-foreground">Distance from Sun</div>
-          <div className="text-lg font-semibold">{stats.distance}</div>
+          <div className="text-lg font-semibold text-white">{stats.distance}</div>
         </div>
       </div>
     </div>
