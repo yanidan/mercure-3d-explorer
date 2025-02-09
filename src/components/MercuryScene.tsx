@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -64,35 +65,69 @@ export const MercuryScene = () => {
       const gridSize = 100;
       const cellWidth = canvas.width / gridSize;
       const cellHeight = canvas.height / gridSize;
-      const habitableThreshold = 8;
+      const colorSimilarityThreshold = 30; // Threshold for color similarity
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
       const colors = new Float32Array(positions.count * 3);
 
+      // Function to get average color of a chunk
+      const getChunkAverageColor = (x: number, y: number) => {
+        const pixelData = ctx.getImageData(
+          Math.floor(x * cellWidth),
+          Math.floor(y * cellHeight),
+          Math.ceil(cellWidth),
+          Math.ceil(cellHeight)
+        ).data;
+
+        let r = 0, g = 0, b = 0, count = 0;
+        for (let i = 0; i < pixelData.length; i += 4) {
+          r += pixelData[i];
+          g += pixelData[i + 1];
+          b += pixelData[i + 2];
+          count++;
+        }
+        return {
+          r: r / count,
+          g: g / count,
+          b: b / count
+        };
+      };
+
+      // Function to check if two colors are similar
+      const areColorsSimilar = (color1: {r: number, g: number, b: number}, color2: {r: number, g: number, b: number}) => {
+        const diff = Math.abs(color1.r - color2.r) +
+                    Math.abs(color1.g - color2.g) +
+                    Math.abs(color1.b - color2.b);
+        return diff < colorSimilarityThreshold;
+      };
+
+      // Create a grid to store chunk colors
+      const colorGrid: Array<Array<{r: number, g: number, b: number}>> = [];
+      for (let i = 0; i < gridSize; i++) {
+        colorGrid[i] = [];
+        for (let j = 0; j < gridSize; j++) {
+          colorGrid[i][j] = getChunkAverageColor(j, i);
+        }
+      }
+
+      // Analyze habitability based on similar neighboring chunks
       for (let i = 0; i < gridSize; i++) {
         for (let j = 0; j < gridSize; j++) {
-          const x = Math.floor(j * cellWidth);
-          const y = Math.floor(i * cellHeight);
-          const pixel = ctx.getImageData(x, y, 1, 1).data;
-          const neighbors = [
-            ctx.getImageData(x + cellWidth, y, 1, 1).data,
-            ctx.getImageData(x - cellWidth, y, 1, 1).data,
-            ctx.getImageData(x, y + cellHeight, 1, 1).data,
-            ctx.getImageData(x, y - cellHeight, 1, 1).data,
-            ctx.getImageData(x + cellWidth, y + cellHeight, 1, 1).data,
-            ctx.getImageData(x - cellWidth, y - cellHeight, 1, 1).data,
-            ctx.getImageData(x + cellWidth, y - cellHeight, 1, 1).data,
-            ctx.getImageData(x - cellWidth, y + cellHeight, 1, 1).data,
-          ];
+          const currentColor = colorGrid[i][j];
+          let isHabitable = false;
 
-          let isHabitable = true;
+          // Check neighbors
+          const neighbors = [];
+          if (i > 0) neighbors.push(colorGrid[i-1][j]);
+          if (i < gridSize-1) neighbors.push(colorGrid[i+1][j]);
+          if (j > 0) neighbors.push(colorGrid[i][j-1]);
+          if (j < gridSize-1) neighbors.push(colorGrid[i][j+1]);
+
+          // If any neighbor has a similar color, mark as habitable
           for (const neighbor of neighbors) {
-            const diff = Math.abs(pixel[0] - neighbor[0]) +
-                        Math.abs(pixel[1] - neighbor[1]) +
-                        Math.abs(pixel[2] - neighbor[2]);
-            if (diff > habitableThreshold) {
-              isHabitable = false;
+            if (areColorsSimilar(currentColor, neighbor)) {
+              isHabitable = true;
               break;
             }
           }
