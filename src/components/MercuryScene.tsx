@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -66,40 +67,55 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const chunkSize = 10;
-      const threshold = 3;
-      const width = canvas.width;
-      const height = canvas.height;
+      const chunkSize = 32;
+      const numChunksX = Math.floor(canvas.width / chunkSize);
+      const numChunksY = Math.floor(canvas.height / chunkSize);
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
       const colors = new Float32Array(positions.count * 3);
+
+      const getChunkAverage = (chunkX: number, chunkY: number) => {
+        const imageData = ctx.getImageData(
+          chunkX * chunkSize,
+          chunkY * chunkSize,
+          chunkSize,
+          chunkSize
+        );
+        const data = imageData.data;
+        let totalR = 0, totalG = 0, totalB = 0;
+        let count = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+          totalR += data[i];
+          totalG += data[i + 1];
+          totalB += data[i + 2];
+          count++;
+        }
+
+        return {
+          r: totalR / count,
+          g: totalG / count,
+          b: totalB / count,
+          brightness: (totalR + totalG + totalB) / (3 * count)
+        };
+      };
 
       for (let vertexIndex = 0; vertexIndex < positions.count; vertexIndex++) {
         const uv = new THREE.Vector2();
         const uvAttribute = geometry.getAttribute('uv');
         uv.fromBufferAttribute(uvAttribute, vertexIndex);
 
-        const x = Math.floor(uv.x * width);
-        const y = Math.floor(uv.y * height);
+        const chunkX = Math.floor(uv.x * numChunksX);
+        const chunkY = Math.floor(uv.y * numChunksY);
 
-        const colors2D: number[][] = [];
-        for (let dy = 0; dy < chunkSize; dy++) {
-          for (let dx = 0; dx < chunkSize; dx++) {
-            if (x + dx < width && y + dy < height) {
-              const pixelData = ctx.getImageData(x + dx, y + dy, 1, 1).data;
-              colors2D.push([pixelData[0], pixelData[1], pixelData[2]]);
-            }
-          }
-        }
-
-        const minColor = colors2D.reduce((min, c) => c.map((v, i) => Math.min(v, min[i])), [255, 255, 255]);
-        const maxColor = colors2D.reduce((max, c) => c.map((v, i) => Math.max(v, max[i])), [0, 0, 0]);
-        const colorDiff = maxColor.map((v, i) => v - minColor[i]);
-        const maxDiff = Math.max(...colorDiff);
+        const chunkAverage = getChunkAverage(
+          Math.min(chunkX, numChunksX - 1),
+          Math.min(chunkY, numChunksY - 1)
+        );
 
         let vertexColor;
-        if (maxDiff < threshold) {
+        if (chunkAverage.brightness > 140 && chunkAverage.brightness < 160) {
           vertexColor = new THREE.Color(0x00ff00).multiplyScalar(2.5);
         } else {
           vertexColor = new THREE.Color('#ea384c');
@@ -117,7 +133,7 @@ export const MercuryScene = () => {
     };
 
     const photoTexture = textureLoader.load('/moon_baseColor.jpeg', () => {
-      if (showHabitableZones && !isZoomedOnMars) {
+      if (showHabitableZones) {
         setTimeout(() => {
           analyzeHabitableZones(photoTexture, mercury);
         }, 100);
@@ -137,24 +153,21 @@ export const MercuryScene = () => {
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
 
-    if (showHabitableZones && !isZoomedOnMars) {
+    if (showHabitableZones) {
       analyzeHabitableZones(isTopographicView ? topographicTexture : standardTexture, mercury);
     }
 
+    const textureLoaderMars = new THREE.TextureLoader();
+    const photoTextureMars = textureLoaderMars.load('/mars_topologie.jpg');
     const marsGeometry = new THREE.SphereGeometry(2.4, 64, 64);
     const marsMaterial = new THREE.MeshStandardMaterial({
       metalness: 0.5,
       roughness: 0.7,
       map: isTopographicView ? topographicTextureMars : standardTextureMars,
-      vertexColors: showHabitableZones,
     });
     const mars = new THREE.Mesh(marsGeometry, marsMaterial);
     mars.position.set(8, 4, -10);
     scene.add(mars);
-
-    if (showHabitableZones && isZoomedOnMars) {
-      analyzeHabitableZones(isTopographicView ? topographicTextureMars : standardTextureMars, mars);
-    }
 
     const starsGeometry = new THREE.BufferGeometry();
     const starsCount = 1000;
