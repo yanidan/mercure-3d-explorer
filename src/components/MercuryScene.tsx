@@ -13,7 +13,7 @@ export const MercuryScene = () => {
     temperature: '-180°C to 430°C',
     distance: '57.9M km'
   });
-  
+
   const marsStats = {
     diameter: '6,792 km',
     orbitalPeriod: '687 days',
@@ -126,6 +126,10 @@ export const MercuryScene = () => {
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
+
+    if (showHabitableZones) {
+      analyzeHabitableZones(photoTexture, mercury);
+    }
 
     const textureLoaderMars = new THREE.TextureLoader();
     const photoTextureMars = textureLoaderMars.load('/mars_topologie.jpg');
