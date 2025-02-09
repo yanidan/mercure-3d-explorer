@@ -332,7 +332,7 @@ export const MercuryScene = () => {
           className="bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
           onClick={() => setCurrentTexture(currentTexture === '/moon_baseColor.jpeg' ? '/mercure_map.jpg' : '/moon_baseColor.jpeg')}
         >
-          {currentTexture === '/moon_baseColor.jpeg' ? 'Vue Topographique' : 'Vue Standard'}
+          {currentTexture === '/moon_baseColor.jpeg' ? 'Vue Standard' : 'Vue Topographique'}
         </button>
         <button
           className="bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
