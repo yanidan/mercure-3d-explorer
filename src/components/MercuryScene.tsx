@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -62,10 +61,10 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const gridSize = 20;
+      const gridSize = 40;
       const cellWidth = canvas.width / gridSize;
       const cellHeight = canvas.height / gridSize;
-      const habitableThreshold = 30;
+      const habitableThreshold = 15;
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
@@ -81,6 +80,8 @@ export const MercuryScene = () => {
             ctx.getImageData(x - cellWidth, y, 1, 1).data,
             ctx.getImageData(x, y + cellHeight, 1, 1).data,
             ctx.getImageData(x, y - cellHeight, 1, 1).data,
+            ctx.getImageData(x + cellWidth, y + cellHeight, 1, 1).data,
+            ctx.getImageData(x - cellWidth, y - cellHeight, 1, 1).data,
           ];
 
           let isHabitable = true;
@@ -300,4 +301,3 @@ export const MercuryScene = () => {
     </div>
   );
 };
-
