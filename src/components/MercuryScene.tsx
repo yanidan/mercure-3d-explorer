@@ -307,6 +307,23 @@ export const MercuryScene = () => {
             : "La planète la plus petite et la plus proche du Soleil"}
         </p>
       </div>
+      
+      {showHabitableZones && (
+        <div className="fixed left-4 top-1/2 transform -translate-y-1/2 bg-black/70 p-4 rounded-lg shadow-xl">
+          <h3 className="text-white font-semibold mb-3">Légende</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-green-500"></div>
+              <span className="text-white text-sm">Zones habitables</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-[#ea384c]"></div>
+              <span className="text-white text-sm">Zones non habitables</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="fixed right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-4">
         <button
           className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md shadow-lg transition-colors"
