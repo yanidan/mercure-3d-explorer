@@ -8,7 +8,6 @@ export const MercuryScene = () => {
   const [error, setError] = useState<string | null>(null);
   const [isZoomedOnMars, setIsZoomedOnMars] = useState(false);
   const [showHabitableZones, setShowHabitableZones] = useState(false);
-  const [currentTexture, setCurrentTexture] = useState<string>('/moon_baseColor.jpeg');
   const [stats, setStats] = useState({
     diameter: '4,879 km',
     orbitalPeriod: '88 days',
@@ -46,23 +45,9 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    const geometry = new THREE.SphereGeometry(2, 64, 64);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x8B8B8B,
-      metalness: 0.7,
-      roughness: 0.5,
-      map: null,
-      bumpScale: 0.02,
-    });
-
-    const mercury = new THREE.Mesh(geometry, material);
-    scene.add(mercury);
-
     const textureLoader = new THREE.TextureLoader();
-    const photoTexture = textureLoader.load(currentTexture);
-    material.map = photoTexture;
-
     const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
+      // On s'assure que l'image est chargée
       if (!texture.image || !texture.image.complete) {
         console.log("Image not yet loaded");
         return;
@@ -142,7 +127,7 @@ export const MercuryScene = () => {
           }
 
           const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
-          const color = isHabitable ? new THREE.Color(0x00ff00) : new THREE.Color(0xff0000);
+          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x080808);
           
           for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
             colors[startIndex + k * 3] = color.r;
@@ -153,15 +138,35 @@ export const MercuryScene = () => {
       }
 
       geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      material.vertexColors = showHabitableZones;
+      const material = planet.material as THREE.MeshStandardMaterial;
+      material.vertexColors = true;
       material.needsUpdate = true;
     };
 
+    const photoTexture = textureLoader.load('/moon_baseColor.jpeg', () => {
+      if (showHabitableZones) {
+        // Attend un court instant pour s'assurer que l'image est complètement chargée
+        setTimeout(() => {
+          analyzeHabitableZones(photoTexture, mercury);
+        }, 100);
+      }
+    });
+
+    const geometry = new THREE.SphereGeometry(2, 64, 64);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x8B8B8B,
+      metalness: 0.7,
+      roughness: 0.5,
+      map: photoTexture,
+      bumpScale: 0.02,
+      vertexColors: showHabitableZones,
+    });
+
+    const mercury = new THREE.Mesh(geometry, material);
+    scene.add(mercury);
+
     if (showHabitableZones) {
       analyzeHabitableZones(photoTexture, mercury);
-    } else {
-      material.vertexColors = false;
-      material.needsUpdate = true;
     }
 
     const textureLoaderMars = new THREE.TextureLoader();
@@ -197,7 +202,6 @@ export const MercuryScene = () => {
     const mouse = new THREE.Vector2();
 
     let isDragging = false;
-    let isDraggingMars = false;
     let previousMousePosition = {
       x: 0,
       y: 0
@@ -208,40 +212,35 @@ export const MercuryScene = () => {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersectsMars = raycaster.intersectObject(mars);
-      const intersectsMercury = raycaster.intersectObject(mercury);
+      const intersects = raycaster.intersectObject(mars);
 
-      if (intersectsMars.length > 0) {
-        isDraggingMars = true;
+      if (intersects.length > 0) {
         setIsZoomedOnMars(true);
         setStats(marsStats);
-      } else if (intersectsMercury.length > 0) {
+      } else {
+        const mercuryIntersects = raycaster.intersectObject(mercury);
+        if (mercuryIntersects.length > 0) {
+          setIsZoomedOnMars(false);
+          setStats(mercuryStats);
+        }
         isDragging = true;
-        setIsZoomedOnMars(false);
-        setStats(mercuryStats);
+        previousMousePosition = {
+          x: event.clientX,
+          y: event.clientY
+        };
       }
-
-      previousMousePosition = {
-        x: event.clientX,
-        y: event.clientY
-      };
     };
 
     const handleMouseMove = (event: MouseEvent) => {
+      if (!isDragging) return;
+
       const deltaMove = {
         x: event.clientX - previousMousePosition.x,
         y: event.clientY - previousMousePosition.y
       };
 
-      if (isDragging) {
-        mercury.rotation.y += deltaMove.x * 0.005;
-        mercury.rotation.x += deltaMove.y * 0.005;
-      }
-
-      if (isDraggingMars) {
-        mars.rotation.y += deltaMove.x * 0.005;
-        mars.rotation.x += deltaMove.y * 0.005;
-      }
+      mercury.rotation.y += deltaMove.x * 0.005;
+      mercury.rotation.x += deltaMove.y * 0.005;
 
       previousMousePosition = {
         x: event.clientX,
@@ -250,8 +249,11 @@ export const MercuryScene = () => {
     };
 
     const handleMouseUp = () => {
+      if (isDragging) {
+        setIsZoomedOnMars(false);
+        setStats(mercuryStats);
+      }
       isDragging = false;
-      isDraggingMars = false;
     };
 
     window.addEventListener('mousedown', handleMouseDown);
@@ -263,9 +265,6 @@ export const MercuryScene = () => {
 
       if (!isDragging) {
         mercury.rotation.y += 0.002;
-      }
-      
-      if (!isDraggingMars) {
         mars.rotation.y += 0.003;
       }
 
@@ -302,7 +301,7 @@ export const MercuryScene = () => {
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [isZoomedOnMars, showHabitableZones, currentTexture]);
+  }, [isZoomedOnMars, showHabitableZones]);
 
   return (
     <div className="mercury-scene" ref={containerRef}>
@@ -319,20 +318,12 @@ export const MercuryScene = () => {
             : "La planète la plus petite et la plus proche du Soleil"}
         </p>
       </div>
-      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-4">
-        <button
-          className="bg-secondary/50 backdrop-blur-md text-white px-4 py-2 rounded-md shadow-lg hover:bg-secondary/80 transition-colors"
-          onClick={() => setCurrentTexture(currentTexture === '/moon_baseColor.jpeg' ? '/mercure_map.jpg' : '/moon_baseColor.jpeg')}
-        >
-          {currentTexture === '/moon_baseColor.jpeg' ? 'Vue Standard' : 'Vue Topographique'}
-        </button>
-        <button
-          className="bg-secondary/50 backdrop-blur-md text-white px-4 py-2 rounded-md shadow-lg hover:bg-secondary/80 transition-colors"
-          onClick={() => setShowHabitableZones(!showHabitableZones)}
-        >
-          {showHabitableZones ? 'Cacher zones habitables' : 'Montrer zones habitables'}
-        </button>
-      </div>
+      <button
+        className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+        onClick={() => setShowHabitableZones(!showHabitableZones)}
+      >
+        {showHabitableZones ? 'Cacher zones habitables' : 'Montrer zones habitables'}
+      </button>
       <div className="stats-grid">
         <div className="stat-card">
           <div className="text-sm text-muted-foreground">Diamètre</div>
