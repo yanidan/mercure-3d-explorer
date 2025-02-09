@@ -60,7 +60,7 @@ export const MercuryScene = () => {
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
 
-    // Create Mars (slightly larger than Mercury)
+    // Create Mars
     const marsGeometry = new THREE.SphereGeometry(2.4, 64, 64);
     const marsMaterial = new THREE.MeshStandardMaterial({
       color: 0xea384c,
@@ -167,9 +167,9 @@ export const MercuryScene = () => {
 
       // Handle camera movement for zoom effect
       if (isZoomedOnMars) {
-        const targetPosition = new THREE.Vector3(6, 2, -6);
+        const targetPosition = new THREE.Vector3(12, 6, -14);
         camera.position.lerp(targetPosition, 0.05);
-        camera.lookAt(new THREE.Vector3(8, 4, -10));
+        camera.lookAt(new THREE.Vector3(4, 2, -5));
       } else {
         const defaultPosition = new THREE.Vector3(0, 0, 5);
         camera.position.lerp(defaultPosition, 0.05);
