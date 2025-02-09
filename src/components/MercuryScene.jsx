@@ -1,6 +1,6 @@
+
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export const MercuryScene = () => {
   const containerRef = useRef(null);
@@ -30,74 +30,17 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Load Mercury texture
-    const textureLoader = new THREE.TextureLoader();
-    const mercuryTexture = textureLoader.load('/mercury-texture.jpg');
-
-    // Create a more complex geometry for Mercury
-    const mercuryGeometry = new THREE.SphereGeometry(2, 64, 64);
-    
-    // Create a material with the Mercury texture
-    const material = new THREE.MeshStandardMaterial({
-      map: mercuryTexture,
-      metalness: 0.5,
-      roughness: 0.7,
-      bumpMap: mercuryTexture,
-      bumpScale: 0.05,
-    });
-
-    // Create displacement patterns for the surface
-    const displacementMap = new THREE.DataTexture(
-      new Float32Array(64 * 64).map(() => Math.random() * 0.1),
-      64,
-      64,
-      THREE.RedFormat,
-      THREE.FloatType
-    );
-    displacementMap.needsUpdate = true;
-    material.displacementMap = displacementMap;
-    material.displacementScale = 0.2;
-
-    // Create the Mercury mesh
-    const mercury = new THREE.Mesh(mercuryGeometry, material);
-
-    // Add some craters
-    const craterGeometry = new THREE.CircleGeometry(0.2, 32);
-    for (let i = 0; i < 15; i++) {
-      const craterMaterial = new THREE.MeshStandardMaterial({
-        color: 0x666666,
-        metalness: 0.6,
-        roughness: 0.4,
-      });
-      const crater = new THREE.Mesh(craterGeometry, craterMaterial);
-      
-      // Position craters randomly on the surface
-      const phi = Math.random() * Math.PI * 2;
-      const theta = Math.random() * Math.PI;
-      const radius = 2;
-      
-      crater.position.x = radius * Math.sin(theta) * Math.cos(phi);
-      crater.position.y = radius * Math.sin(theta) * Math.sin(phi);
-      crater.position.z = radius * Math.cos(theta);
-      
-      crater.lookAt(new THREE.Vector3(0, 0, 0));
-      mercury.add(crater);
-    }
-
-    scene.add(mercury);
-    setIsLoading(false);
-
     // Camera position
     camera.position.z = 5;
 
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-      mercury.rotation.y += 0.002;
       renderer.render(scene, camera);
     };
 
     animate();
+    setIsLoading(false);
 
     // Handle resize
     const handleResize = () => {
@@ -121,7 +64,7 @@ export const MercuryScene = () => {
     <div className="mercury-scene" ref={containerRef}>
       {isLoading && (
         <div className="loading-screen">
-          <div className="text-2xl animate-pulse">Loading Mercury...</div>
+          <div className="text-2xl animate-pulse">Loading Scene...</div>
         </div>
       )}
       <div className="mercury-overlay">
