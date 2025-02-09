@@ -1,13 +1,23 @@
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 function MercuryModel() {
   const { scene } = useGLTF("/mercure/scene.gltf");
-  // Scale and position the model appropriately
-  scene.scale.set(1.5, 1.5, 1.5);
+  useEffect(() => {
+    if (scene) {
+      scene.scale.set(1.5, 1.5, 1.5);
+      scene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+  }, [scene]);
+
   return <primitive object={scene} position={[0, 0, 0]} />;
 }
 
@@ -19,26 +29,52 @@ export const MercuryScene = () => {
     distance: '57.9M km'
   });
 
+  const handleContextLost = (event) => {
+    event.preventDefault();
+    console.log('WebGL context lost. Attempting to restore...');
+  };
+
+  const handleContextRestored = () => {
+    console.log('WebGL context restored');
+  };
+
+  useEffect(() => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      canvas.addEventListener('webglcontextlost', handleContextLost);
+      canvas.addEventListener('webglcontextrestored', handleContextRestored);
+    }
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener('webglcontextlost', handleContextLost);
+        canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+      }
+    };
+  }, []);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#000' }}>
       <Canvas
-        gl={{ 
+        shadows
+        gl={{
           antialias: true,
-          toneMapping: THREE.ACESFilmicToneMapping,
-          outputEncoding: THREE.sRGBEncoding
+          alpha: false,
+          powerPreference: "high-performance",
+          failIfMajorPerformanceCaveat: false,
+          preserveDrawingBuffer: true
         }}
-        camera={{ 
+        camera={{
           position: [0, 0, 5],
           fov: 60,
           near: 0.1,
           far: 1000
         }}
       >
-        <color attach="background" args={['#000']} />
+        <color attach="background" args={['#000000']} />
         <ambientLight intensity={0.3} />
-        <directionalLight 
-          intensity={1} 
-          position={[5, 3, 5]} 
+        <directionalLight
+          position={[5, 3, 5]}
+          intensity={1}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
@@ -49,7 +85,7 @@ export const MercuryScene = () => {
           </Html>
         }>
           <MercuryModel />
-          <OrbitControls 
+          <OrbitControls
             enableDamping
             dampingFactor={0.05}
             screenSpacePanning={false}
@@ -59,11 +95,11 @@ export const MercuryScene = () => {
           />
         </Suspense>
       </Canvas>
-      
-      <div className="mercury-overlay" style={{ 
-        position: 'absolute', 
-        top: '20px', 
-        left: '20px', 
+
+      <div className="mercury-overlay" style={{
+        position: 'absolute',
+        top: '20px',
+        left: '20px',
         color: 'white',
         textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
       }}>
@@ -72,12 +108,12 @@ export const MercuryScene = () => {
           The smallest and innermost planet of the Solar System
         </p>
       </div>
-      
-      <div className="stats-grid" style={{ 
-        position: 'absolute', 
-        bottom: '20px', 
-        left: '20px', 
-        display: 'grid', 
+
+      <div className="stats-grid" style={{
+        position: 'absolute',
+        bottom: '20px',
+        left: '20px',
+        display: 'grid',
         gridTemplateColumns: 'repeat(4, auto)',
         gap: '1rem',
         background: 'rgba(0,0,0,0.7)',
