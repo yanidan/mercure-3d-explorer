@@ -46,13 +46,13 @@ export const MercuryScene = () => {
     scene.add(directionalLight);
 
     const textureLoader = new THREE.TextureLoader();
-    const photoTexture = textureLoader.load('/moon_baseColor.jpeg', (texture) => {
-      if (showHabitableZones) {
-        analyzeHabitableZones(texture, mercury);
-      }
-    });
-
     const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
+      // On s'assure que l'image est chargée
+      if (!texture.image || !texture.image.complete) {
+        console.log("Image not yet loaded");
+        return;
+      }
+
       const image = texture.image;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -65,13 +65,12 @@ export const MercuryScene = () => {
       const gridSize = 100;
       const cellWidth = canvas.width / gridSize;
       const cellHeight = canvas.height / gridSize;
-      const colorSimilarityThreshold = 30; // Threshold for color similarity
+      const colorSimilarityThreshold = 30;
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
       const colors = new Float32Array(positions.count * 3);
 
-      // Function to get average color of a chunk
       const getChunkAverageColor = (x: number, y: number) => {
         const pixelData = ctx.getImageData(
           Math.floor(x * cellWidth),
@@ -94,7 +93,6 @@ export const MercuryScene = () => {
         };
       };
 
-      // Function to check if two colors are similar
       const areColorsSimilar = (color1: {r: number, g: number, b: number}, color2: {r: number, g: number, b: number}) => {
         const diff = Math.abs(color1.r - color2.r) +
                     Math.abs(color1.g - color2.g) +
@@ -102,7 +100,6 @@ export const MercuryScene = () => {
         return diff < colorSimilarityThreshold;
       };
 
-      // Create a grid to store chunk colors
       const colorGrid: Array<Array<{r: number, g: number, b: number}>> = [];
       for (let i = 0; i < gridSize; i++) {
         colorGrid[i] = [];
@@ -111,20 +108,17 @@ export const MercuryScene = () => {
         }
       }
 
-      // Analyze habitability based on similar neighboring chunks
       for (let i = 0; i < gridSize; i++) {
         for (let j = 0; j < gridSize; j++) {
           const currentColor = colorGrid[i][j];
           let isHabitable = false;
 
-          // Check neighbors
           const neighbors = [];
           if (i > 0) neighbors.push(colorGrid[i-1][j]);
           if (i < gridSize-1) neighbors.push(colorGrid[i+1][j]);
           if (j > 0) neighbors.push(colorGrid[i][j-1]);
           if (j < gridSize-1) neighbors.push(colorGrid[i][j+1]);
 
-          // If any neighbor has a similar color, mark as habitable
           for (const neighbor of neighbors) {
             if (areColorsSimilar(currentColor, neighbor)) {
               isHabitable = true;
@@ -148,6 +142,15 @@ export const MercuryScene = () => {
       material.vertexColors = true;
       material.needsUpdate = true;
     };
+
+    const photoTexture = textureLoader.load('/moon_baseColor.jpeg', () => {
+      if (showHabitableZones) {
+        // Attend un court instant pour s'assurer que l'image est complètement chargée
+        setTimeout(() => {
+          analyzeHabitableZones(photoTexture, mercury);
+        }, 100);
+      }
+    });
 
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const material = new THREE.MeshStandardMaterial({
