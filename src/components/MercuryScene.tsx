@@ -273,7 +273,7 @@ export const MercuryScene = () => {
         </p>
       </div>
       <button
-        className="fixed bottom-4 right-4 bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+        className="fixed top-4 right-4 bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
         onClick={() => setShowHabitableZones(!showHabitableZones)}
       >
         {showHabitableZones ? 'Hide Habitable Zones' : 'Show Habitable Zones'}
