@@ -30,14 +30,12 @@ export const MercuryScene = () => {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     containerRef.current.appendChild(renderer.domElement);
 
-    // Lighting
     const ambientLight = new THREE.AmbientLight(0x404040, 1);
     scene.add(ambientLight);
     
@@ -45,7 +43,6 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Create Mercury
     const textureLoader = new THREE.TextureLoader();
     const photoTexture = textureLoader.load('/moon_baseColor.jpeg');
     const geometry = new THREE.SphereGeometry(2, 64, 64);
@@ -60,7 +57,6 @@ export const MercuryScene = () => {
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
 
-    // Create Mars
     const marsGeometry = new THREE.SphereGeometry(2.4, 64, 64);
     const marsMaterial = new THREE.MeshStandardMaterial({
       color: 0xea384c,
@@ -71,7 +67,6 @@ export const MercuryScene = () => {
     mars.position.set(8, 4, -10);
     scene.add(mars);
 
-    // Stars background
     const starsGeometry = new THREE.BufferGeometry();
     const starsCount = 1000;
     const starsPositions = new Float32Array(starsCount * 3);
@@ -87,14 +82,11 @@ export const MercuryScene = () => {
     const stars = new THREE.Points(starsGeometry, starsMaterial);
     scene.add(stars);
 
-    // Camera position
     camera.position.z = 5;
 
-    // Raycaster for detecting clicks on Mars
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    // Mouse controls
     let isDragging = false;
     let previousMousePosition = {
       x: 0,
@@ -150,26 +142,22 @@ export const MercuryScene = () => {
       isDragging = false;
     };
 
-    // Add event listeners
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
 
-    // Render loop
     const animate = () => {
       requestAnimationFrame(animate);
 
-      // Rotate planets
       if (!isDragging) {
         mercury.rotation.y += 0.002;
         mars.rotation.y += 0.003;
       }
 
-      // Handle camera movement for zoom effect
       if (isZoomedOnMars) {
-        const targetPosition = new THREE.Vector3(12, 6, -14);
+        const targetPosition = new THREE.Vector3(15, 6, -12);
         camera.position.lerp(targetPosition, 0.05);
-        camera.lookAt(new THREE.Vector3(4, 2, -5));
+        camera.lookAt(new THREE.Vector3(8, 4, -10));
       } else {
         const defaultPosition = new THREE.Vector3(0, 0, 5);
         camera.position.lerp(defaultPosition, 0.05);
@@ -182,7 +170,6 @@ export const MercuryScene = () => {
     animate();
     setIsLoading(false);
 
-    // Handle resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -191,7 +178,6 @@ export const MercuryScene = () => {
 
     window.addEventListener('resize', handleResize);
 
-    // Cleanup
     return () => {
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
