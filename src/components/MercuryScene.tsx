@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -141,7 +142,7 @@ export const MercuryScene = () => {
           }
 
           const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
-          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x080808);
+          const color = isHabitable ? new THREE.Color(0x00ff00) : new THREE.Color(0xff0000);
           
           for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
             colors[startIndex + k * 3] = color.r;
@@ -152,13 +153,15 @@ export const MercuryScene = () => {
       }
 
       geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      const material = planet.material as THREE.MeshStandardMaterial;
-      material.vertexColors = true;
+      material.vertexColors = showHabitableZones;
       material.needsUpdate = true;
     };
 
     if (showHabitableZones) {
       analyzeHabitableZones(photoTexture, mercury);
+    } else {
+      material.vertexColors = false;
+      material.needsUpdate = true;
     }
 
     const textureLoaderMars = new THREE.TextureLoader();
