@@ -47,7 +47,9 @@ export const MercuryScene = () => {
 
     const textureLoader = new THREE.TextureLoader();
     const topographicTexture = textureLoader.load('/moon_baseColor.jpeg');
-    const standardTexture = textureLoader.load('/mercure_map.jpg');
+    const topographicTextureMars = textureLoader.load('/mars_topologie.jpg');
+    const standardTexture = textureLoader.load('/mercure_map.png');
+    const standardTextureMars = textureLoader.load('/mars_map.png');
     
     const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
       if (!texture.image || !texture.image.complete) {
