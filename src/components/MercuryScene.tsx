@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -164,10 +163,15 @@ export const MercuryScene = () => {
       metalness: 0.5,
       roughness: 0.7,
       map: isTopographicView ? topographicTextureMars : standardTextureMars,
+      vertexColors: showHabitableZones,
     });
     const mars = new THREE.Mesh(marsGeometry, marsMaterial);
     mars.position.set(8, 4, -10);
     scene.add(mars);
+
+    if (showHabitableZones) {
+      analyzeHabitableZones(isTopographicView ? topographicTextureMars : standardTextureMars, mars);
+    }
 
     const starsGeometry = new THREE.BufferGeometry();
     const starsCount = 1000;
