@@ -6,6 +6,7 @@ export const MercuryScene = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isZoomedOnMars, setIsZoomedOnMars] = useState(false);
+  const [showHabitableZones, setShowHabitableZones] = useState(false);
   const [stats, setStats] = useState({
     diameter: '4,879 km',
     orbitalPeriod: '88 days',
@@ -44,7 +45,71 @@ export const MercuryScene = () => {
     scene.add(directionalLight);
 
     const textureLoader = new THREE.TextureLoader();
-    const photoTexture = textureLoader.load('/moon_baseColor.jpeg');
+    const photoTexture = textureLoader.load('/moon_baseColor.jpeg', (texture) => {
+      if (showHabitableZones) {
+        analyzeHabitableZones(texture, mercury);
+      }
+    });
+
+    const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
+      const image = texture.image;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = image.width;
+      canvas.height = image.height;
+      ctx.drawImage(image, 0, 0);
+
+      const gridSize = 20;
+      const cellWidth = canvas.width / gridSize;
+      const cellHeight = canvas.height / gridSize;
+      const habitableThreshold = 30;
+
+      const geometry = planet.geometry as THREE.SphereGeometry;
+      const positions = geometry.attributes.position;
+      const colors = new Float32Array(positions.count * 3);
+
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          const x = Math.floor(j * cellWidth);
+          const y = Math.floor(i * cellHeight);
+          const pixel = ctx.getImageData(x, y, 1, 1).data;
+          const neighbors = [
+            ctx.getImageData(x + cellWidth, y, 1, 1).data,
+            ctx.getImageData(x - cellWidth, y, 1, 1).data,
+            ctx.getImageData(x, y + cellHeight, 1, 1).data,
+            ctx.getImageData(x, y - cellHeight, 1, 1).data,
+          ];
+
+          let isHabitable = true;
+          for (const neighbor of neighbors) {
+            const diff = Math.abs(pixel[0] - neighbor[0]) +
+                        Math.abs(pixel[1] - neighbor[1]) +
+                        Math.abs(pixel[2] - neighbor[2]);
+            if (diff > habitableThreshold) {
+              isHabitable = false;
+              break;
+            }
+          }
+
+          const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
+          const color = isHabitable ? new THREE.Color(0x00ff00) : new THREE.Color(0x333333);
+          
+          for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
+            colors[startIndex + k * 3] = color.r;
+            colors[startIndex + k * 3 + 1] = color.g;
+            colors[startIndex + k * 3 + 2] = color.b;
+          }
+        }
+      }
+
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const material = planet.material as THREE.MeshStandardMaterial;
+      material.vertexColors = true;
+      material.needsUpdate = true;
+    };
+
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const material = new THREE.MeshStandardMaterial({
       color: 0x8B8B8B,
@@ -52,15 +117,16 @@ export const MercuryScene = () => {
       roughness: 0.5,
       map: photoTexture,
       bumpScale: 0.02,
+      vertexColors: showHabitableZones,
     });
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
+
     const textureLoaderMars = new THREE.TextureLoader();
     const photoTextureMars = textureLoaderMars.load('/mars_topologie.jpg');
     const marsGeometry = new THREE.SphereGeometry(2.4, 64, 64);
     const marsMaterial = new THREE.MeshStandardMaterial({
-      
       metalness: 0.5,
       roughness: 0.7,
       map: photoTextureMars,
@@ -189,7 +255,7 @@ export const MercuryScene = () => {
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [isZoomedOnMars]);
+  }, [isZoomedOnMars, showHabitableZones]);
 
   return (
     <div className="mercury-scene" ref={containerRef}>
@@ -206,6 +272,12 @@ export const MercuryScene = () => {
             : "The smallest and innermost planet of the Solar System"}
         </p>
       </div>
+      <button
+        className="fixed bottom-4 right-4 bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+        onClick={() => setShowHabitableZones(!showHabitableZones)}
+      >
+        {showHabitableZones ? 'Hide Habitable Zones' : 'Show Habitable Zones'}
+      </button>
       <div className="stats-grid">
         <div className="stat-card">
           <div className="text-sm text-muted-foreground">Diameter</div>
