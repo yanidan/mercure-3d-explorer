@@ -6,13 +6,27 @@ export const MercuryScene = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isZoomedOnSecondPlanet, setIsZoomedOnSecondPlanet] = useState(false);
-  const [stats] = useState({
+  const [isZoomedOnMars, setIsZoomedOnMars] = useState(false);
+  const [stats, setStats] = useState({
     diameter: '4,879 km',
     orbitalPeriod: '88 days',
     temperature: '-180°C to 430°C',
     distance: '57.9M km'
   });
+  
+  const marsStats = {
+    diameter: '6,792 km',
+    orbitalPeriod: '687 days',
+    temperature: '-140°C to 20°C',
+    distance: '227.9M km'
+  };
+
+  const mercuryStats = {
+    diameter: '4,879 km',
+    orbitalPeriod: '88 days',
+    temperature: '-180°C to 430°C',
+    distance: '57.9M km'
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -32,7 +46,7 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Create main planet (Mercury)
+    // Create Mercury
     const textureLoader = new THREE.TextureLoader();
     const photoTexture = textureLoader.load('/moon_baseColor.jpeg');
     const geometry = new THREE.SphereGeometry(2, 64, 64);
@@ -47,16 +61,16 @@ export const MercuryScene = () => {
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
 
-    // Create second planet (smaller and in the background)
-    const smallPlanetGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const smallPlanetMaterial = new THREE.MeshStandardMaterial({
-      color: 0xFF6B6B,
+    // Create Mars (larger than Mercury)
+    const marsGeometry = new THREE.SphereGeometry(3.5, 64, 64); // Mars is bigger than Mercury
+    const marsMaterial = new THREE.MeshStandardMaterial({
+      color: 0xea384c, // Reddish color for Mars
       metalness: 0.5,
       roughness: 0.7,
     });
-    const smallPlanet = new THREE.Mesh(smallPlanetGeometry, smallPlanetMaterial);
-    smallPlanet.position.set(8, 4, -10); // Position it in the background
-    scene.add(smallPlanet);
+    const mars = new THREE.Mesh(marsGeometry, marsMaterial);
+    mars.position.set(8, 4, -10);
+    scene.add(mars);
 
     // Stars background
     const starsGeometry = new THREE.BufferGeometry();
@@ -77,7 +91,7 @@ export const MercuryScene = () => {
     // Camera position
     camera.position.z = 5;
 
-    // Raycaster for detecting clicks on the small planet
+    // Raycaster for detecting clicks on Mars
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -93,11 +107,11 @@ export const MercuryScene = () => {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(smallPlanet);
+      const intersects = raycaster.intersectObject(mars);
 
       if (intersects.length > 0) {
-        // Click on small planet - zoom to it
-        setIsZoomedOnSecondPlanet(true);
+        setIsZoomedOnMars(true);
+        setStats(marsStats);
       } else {
         isDragging = true;
         previousMousePosition = {
@@ -125,6 +139,10 @@ export const MercuryScene = () => {
     };
 
     const handleMouseUp = () => {
+      if (isDragging) {
+        setIsZoomedOnMars(false);
+        setStats(mercuryStats);
+      }
       isDragging = false;
     };
 
@@ -140,14 +158,14 @@ export const MercuryScene = () => {
       // Rotate planets
       if (!isDragging) {
         mercury.rotation.y += 0.002;
-        smallPlanet.rotation.y += 0.003;
+        mars.rotation.y += 0.003;
       }
 
       // Handle camera movement for zoom effect
-      if (isZoomedOnSecondPlanet) {
-        const targetPosition = new THREE.Vector3(8, 4, -7); // Position near small planet
+      if (isZoomedOnMars) {
+        const targetPosition = new THREE.Vector3(8, 4, -7);
         camera.position.lerp(targetPosition, 0.05);
-        camera.lookAt(smallPlanet.position);
+        camera.lookAt(mars.position);
       } else {
         const defaultPosition = new THREE.Vector3(0, 0, 5);
         camera.position.lerp(defaultPosition, 0.05);
@@ -179,19 +197,21 @@ export const MercuryScene = () => {
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [isZoomedOnSecondPlanet]);
+  }, [isZoomedOnMars]);
 
   return (
     <div className="mercury-scene" ref={containerRef}>
       {isLoading && (
         <div className="loading-screen">
-          <div className="text-2xl animate-pulse">Loading Mercury...</div>
+          <div className="text-2xl animate-pulse">Loading Scene...</div>
         </div>
       )}
       <div className="mercury-overlay">
-        <h1 className="mercury-title">Mercury</h1>
+        <h1 className="mercury-title">{isZoomedOnMars ? "Mars" : "Mercury"}</h1>
         <p className="text-muted-foreground mt-2">
-          The smallest and innermost planet of the Solar System
+          {isZoomedOnMars 
+            ? "The Red Planet, fourth from the Sun"
+            : "The smallest and innermost planet of the Solar System"}
         </p>
       </div>
       <div className="stats-grid">
