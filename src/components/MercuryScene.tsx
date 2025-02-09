@@ -56,12 +56,14 @@ export const MercuryScene = () => {
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
-
+    const textureLoaderMars = new THREE.TextureLoader();
+    const photoTextureMars = textureLoaderMars.load('/mars_topologie.jpg');
     const marsGeometry = new THREE.SphereGeometry(2.4, 64, 64);
     const marsMaterial = new THREE.MeshStandardMaterial({
-      color: 0xea384c,
+      
       metalness: 0.5,
       roughness: 0.7,
+      map: photoTextureMars,
     });
     const mars = new THREE.Mesh(marsGeometry, marsMaterial);
     mars.position.set(8, 4, -10);
