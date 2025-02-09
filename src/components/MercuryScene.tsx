@@ -6,6 +6,7 @@ export const MercuryScene = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isZoomedOnSecondPlanet, setIsZoomedOnSecondPlanet] = useState(false);
   const [stats] = useState({
     diameter: '4,879 km',
     orbitalPeriod: '88 days',
@@ -31,24 +32,31 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // Create grid texture
-      const gridSize = 512;
-      const textureLoader = new THREE.TextureLoader();
-      const photoTexture = textureLoader.load('/moon_baseColor.jpeg');
-
-      // Mercury geometry with a material that includes grid texture
-      const geometry = new THREE.SphereGeometry(2, 64, 64);
-      const material = new THREE.MeshStandardMaterial({
-        color: 0x8B8B8B,
-        metalness: 0.7,
-        roughness: 0.5,
-        map: photoTexture,
-        bumpScale: 0.02,
-      });
+    // Create main planet (Mercury)
+    const textureLoader = new THREE.TextureLoader();
+    const photoTexture = textureLoader.load('/moon_baseColor.jpeg');
+    const geometry = new THREE.SphereGeometry(2, 64, 64);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x8B8B8B,
+      metalness: 0.7,
+      roughness: 0.5,
+      map: photoTexture,
+      bumpScale: 0.02,
+    });
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
-    setIsLoading(false);
+
+    // Create second planet (smaller and in the background)
+    const smallPlanetGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const smallPlanetMaterial = new THREE.MeshStandardMaterial({
+      color: 0xFF6B6B,
+      metalness: 0.5,
+      roughness: 0.7,
+    });
+    const smallPlanet = new THREE.Mesh(smallPlanetGeometry, smallPlanetMaterial);
+    smallPlanet.position.set(8, 4, -10); // Position it in the background
+    scene.add(smallPlanet);
 
     // Stars background
     const starsGeometry = new THREE.BufferGeometry();
@@ -69,6 +77,10 @@ export const MercuryScene = () => {
     // Camera position
     camera.position.z = 5;
 
+    // Raycaster for detecting clicks on the small planet
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
     // Mouse controls
     let isDragging = false;
     let previousMousePosition = {
@@ -77,11 +89,22 @@ export const MercuryScene = () => {
     };
 
     const handleMouseDown = (event: MouseEvent) => {
-      isDragging = true;
-      previousMousePosition = {
-        x: event.clientX,
-        y: event.clientY
-      };
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(smallPlanet);
+
+      if (intersects.length > 0) {
+        // Click on small planet - zoom to it
+        setIsZoomedOnSecondPlanet(true);
+      } else {
+        isDragging = true;
+        previousMousePosition = {
+          x: event.clientX,
+          y: event.clientY
+        };
+      }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
@@ -114,15 +137,28 @@ export const MercuryScene = () => {
     const animate = () => {
       requestAnimationFrame(animate);
 
-      // Only auto-rotate when not being dragged
+      // Rotate planets
       if (!isDragging) {
         mercury.rotation.y += 0.002;
+        smallPlanet.rotation.y += 0.003;
+      }
+
+      // Handle camera movement for zoom effect
+      if (isZoomedOnSecondPlanet) {
+        const targetPosition = new THREE.Vector3(8, 4, -7); // Position near small planet
+        camera.position.lerp(targetPosition, 0.05);
+        camera.lookAt(smallPlanet.position);
+      } else {
+        const defaultPosition = new THREE.Vector3(0, 0, 5);
+        camera.position.lerp(defaultPosition, 0.05);
+        camera.lookAt(scene.position);
       }
 
       renderer.render(scene, camera);
     };
 
     animate();
+    setIsLoading(false);
 
     // Handle resize
     const handleResize = () => {
@@ -143,42 +179,7 @@ export const MercuryScene = () => {
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, []);
-
-  // Helper function to create grid texture
-  const createGridTexture = (size: number) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return canvas;
-
-    // Fill background
-    ctx.fillStyle = '#8B8B8B';
-    ctx.fillRect(0, 0, size, size);
-
-    // Draw grid
-    ctx.strokeStyle = '#666666';
-    ctx.lineWidth = 1;
-
-    const cellSize = size / 20; // 20 grid divisions
-
-    for (let i = 0; i <= size; i += cellSize) {
-      // Vertical lines
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, size);
-      ctx.stroke();
-
-      // Horizontal lines
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(size, i);
-      ctx.stroke();
-    }
-
-    return canvas;
-  };
+  }, [isZoomedOnSecondPlanet]);
 
   return (
     <div className="mercury-scene" ref={containerRef}>
