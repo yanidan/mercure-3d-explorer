@@ -67,7 +67,7 @@ export const MercuryScene = () => {
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
-      const colors = new Float32Array(positions.count * 3);
+      const colors = new Float32Array(positions.count * 4);
 
       const getChunkAverageColor = (x: number, y: number) => {
         const pixelData = ctx.getImageData(
@@ -124,19 +124,24 @@ export const MercuryScene = () => {
             }
           }
 
-          const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
-          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x333333);
-          
+          const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 4;
+          const color = isHabitable ? 
+            new THREE.Color(0x00ff00).multiplyScalar(2.5) : 
+            new THREE.Color(0x333333);
+          const alpha = isHabitable ? 1.0 : 0.3;
+
           for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
-            colors[startIndex + k * 3] = color.r;
-            colors[startIndex + k * 3 + 1] = color.g;
-            colors[startIndex + k * 3 + 2] = color.b;
+            colors[startIndex + k * 4] = color.r;
+            colors[startIndex + k * 4 + 1] = color.g;
+            colors[startIndex + k * 4 + 2] = color.b;
+            colors[startIndex + k * 4 + 3] = alpha;
           }
         }
       }
 
-      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
       const material = planet.material as THREE.MeshStandardMaterial;
+      material.transparent = true;
       material.vertexColors = true;
       material.needsUpdate = true;
     };
@@ -157,6 +162,7 @@ export const MercuryScene = () => {
       map: photoTexture,
       bumpScale: 0.02,
       vertexColors: showHabitableZones,
+      transparent: true,
     });
 
     const mercury = new THREE.Mesh(geometry, material);
