@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -46,6 +47,7 @@ export const MercuryScene = () => {
 
     const textureLoader = new THREE.TextureLoader();
     const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
+      // On s'assure que l'image est chargée
       if (!texture.image || !texture.image.complete) {
         console.log("Image not yet loaded");
         return;
@@ -65,9 +67,9 @@ export const MercuryScene = () => {
       const cellHeight = canvas.height / gridSize;
       const colorSimilarityThreshold = 30;
 
-      const overlayGeometry = new THREE.SphereGeometry(2.01, 64, 64);
-      const positions = overlayGeometry.attributes.position;
-      const colors = new Float32Array(positions.count * 4);
+      const geometry = planet.geometry as THREE.SphereGeometry;
+      const positions = geometry.attributes.position;
+      const colors = new Float32Array(positions.count * 3);
 
       const getChunkAverageColor = (x: number, y: number) => {
         const pixelData = ctx.getImageData(
@@ -124,38 +126,31 @@ export const MercuryScene = () => {
             }
           }
 
-          const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 4;
-          const color = isHabitable ? 
-            new THREE.Color(0x00ff00).multiplyScalar(2.5) : 
-            new THREE.Color(0x000000);
-          const alpha = isHabitable ? 0.5 : 0;
-
+          const startIndex = (i * gridSize + j) * (positions.count / (gridSize * gridSize)) * 3;
+          const color = isHabitable ? new THREE.Color(0x00ff00).multiplyScalar(2.5) : new THREE.Color(0x080808);
+          
           for (let k = 0; k < positions.count / (gridSize * gridSize); k++) {
-            colors[startIndex + k * 4] = color.r;
-            colors[startIndex + k * 4 + 1] = color.g;
-            colors[startIndex + k * 4 + 2] = color.b;
-            colors[startIndex + k * 4 + 3] = alpha;
+            colors[startIndex + k * 3] = color.r;
+            colors[startIndex + k * 3 + 1] = color.g;
+            colors[startIndex + k * 3 + 2] = color.b;
           }
         }
       }
 
-      overlayGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
-      
-      const overlayMaterial = new THREE.MeshBasicMaterial({
-        vertexColors: true,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-      });
-
-      const overlay = new THREE.Mesh(overlayGeometry, overlayMaterial);
-      planet.add(overlay);
-      
-      return overlay;
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const material = planet.material as THREE.MeshStandardMaterial;
+      material.vertexColors = true;
+      material.needsUpdate = true;
     };
 
-    const photoTexture = textureLoader.load('/moon_baseColor.jpeg');
-    let habitableOverlay: THREE.Mesh | null = null;
+    const photoTexture = textureLoader.load('/moon_baseColor.jpeg', () => {
+      if (showHabitableZones) {
+        // Attend un court instant pour s'assurer que l'image est complètement chargée
+        setTimeout(() => {
+          analyzeHabitableZones(photoTexture, mercury);
+        }, 100);
+      }
+    });
 
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const material = new THREE.MeshStandardMaterial({
@@ -164,26 +159,14 @@ export const MercuryScene = () => {
       roughness: 0.5,
       map: photoTexture,
       bumpScale: 0.02,
+      vertexColors: showHabitableZones,
     });
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
 
-    photoTexture.addEventListener('load', () => {
-      if (showHabitableZones) {
-        habitableOverlay = analyzeHabitableZones(photoTexture, mercury);
-      }
-    });
-
-    if (showHabitableZones && photoTexture.image) {
-      if (!habitableOverlay) {
-        habitableOverlay = analyzeHabitableZones(photoTexture, mercury);
-      }
-    } else if (!showHabitableZones && habitableOverlay) {
-      mercury.remove(habitableOverlay);
-      habitableOverlay.geometry.dispose();
-      habitableOverlay.material.dispose();
-      habitableOverlay = null;
+    if (showHabitableZones) {
+      analyzeHabitableZones(photoTexture, mercury);
     }
 
     const textureLoaderMars = new THREE.TextureLoader();
@@ -316,11 +299,6 @@ export const MercuryScene = () => {
       window.removeEventListener('resize', handleResize);
       if (containerRef.current) {
         containerRef.current.removeChild(renderer.domElement);
-      }
-      if (habitableOverlay) {
-        mercury.remove(habitableOverlay);
-        habitableOverlay.geometry.dispose();
-        habitableOverlay.material.dispose();
       }
     };
   }, [isZoomedOnMars, showHabitableZones]);
