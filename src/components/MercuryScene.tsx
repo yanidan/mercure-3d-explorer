@@ -66,7 +66,7 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const chunkSize = 128; // Taille des chunks modifiée à 128
+      const chunkSize = 256; // Taille des chunks modifiée à 256
       const numChunksX = Math.floor(canvas.width / chunkSize);
       const numChunksY = Math.floor(canvas.height / chunkSize);
 
