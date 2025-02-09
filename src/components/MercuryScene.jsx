@@ -43,6 +43,15 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
+    // TODO: Ajouter la planète Mercury ici
+    // Exemple:
+    // const mercuryGeometry = new THREE.SphereGeometry(1, 32, 32);
+    // const mercuryMaterial = new THREE.MeshStandardMaterial({ 
+    //   map: new THREE.TextureLoader().load('/mercury-texture.jpg')
+    // });
+    // const mercuryMesh = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
+    // scene.add(mercuryMesh);
+
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
