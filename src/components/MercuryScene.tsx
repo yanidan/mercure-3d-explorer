@@ -13,7 +13,7 @@ export const MercuryScene = () => {
     temperature: '-180°C to 430°C',
     distance: '57.9M km'
   });
-  
+
   const marsStats = {
     diameter: '6,792 km',
     orbitalPeriod: '687 days',
@@ -61,10 +61,10 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const gridSize = 100; // Augmenté à 100 pour plus de précision
+      const gridSize = 100;
       const cellWidth = canvas.width / gridSize;
       const cellHeight = canvas.height / gridSize;
-      const habitableThreshold = 8; // Seuil réduit pour détecter plus de zones habitables
+      const habitableThreshold = 8;
 
       const geometry = planet.geometry as THREE.SphereGeometry;
       const positions = geometry.attributes.position;
@@ -126,6 +126,10 @@ export const MercuryScene = () => {
 
     const mercury = new THREE.Mesh(geometry, material);
     scene.add(mercury);
+
+    if (showHabitableZones) {
+      analyzeHabitableZones(photoTexture, mercury);
+    }
 
     const textureLoaderMars = new THREE.TextureLoader();
     const photoTextureMars = textureLoaderMars.load('/mars_topologie.jpg');
