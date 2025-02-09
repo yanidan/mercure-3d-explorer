@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -8,6 +7,7 @@ export const MercuryScene = () => {
   const [error, setError] = useState<string | null>(null);
   const [isZoomedOnMars, setIsZoomedOnMars] = useState(false);
   const [showHabitableZones, setShowHabitableZones] = useState(false);
+  const [currentTexture, setCurrentTexture] = useState<string>('/moon_baseColor.jpeg');
   const [stats, setStats] = useState({
     diameter: '4,879 km',
     orbitalPeriod: '88 days',
@@ -47,7 +47,6 @@ export const MercuryScene = () => {
 
     const textureLoader = new THREE.TextureLoader();
     const analyzeHabitableZones = (texture: THREE.Texture, planet: THREE.Mesh) => {
-      // On s'assure que l'image est chargée
       if (!texture.image || !texture.image.complete) {
         console.log("Image not yet loaded");
         return;
@@ -143,14 +142,25 @@ export const MercuryScene = () => {
       material.needsUpdate = true;
     };
 
-    const photoTexture = textureLoader.load('/moon_baseColor.jpeg', () => {
+    const photoTexture = textureLoader.load(currentTexture);
+    let habitableOverlay: THREE.Mesh | null = null;
+
+    photoTexture.addEventListener('load', () => {
       if (showHabitableZones) {
-        // Attend un court instant pour s'assurer que l'image est complètement chargée
-        setTimeout(() => {
-          analyzeHabitableZones(photoTexture, mercury);
-        }, 100);
+        habitableOverlay = analyzeHabitableZones(photoTexture, mercury);
       }
     });
+
+    if (showHabitableZones && photoTexture.image) {
+      if (!habitableOverlay) {
+        habitableOverlay = analyzeHabitableZones(photoTexture, mercury);
+      }
+    } else if (!showHabitableZones && habitableOverlay) {
+      mercury.remove(habitableOverlay);
+      habitableOverlay.geometry.dispose();
+      habitableOverlay.material.dispose();
+      habitableOverlay = null;
+    }
 
     const geometry = new THREE.SphereGeometry(2, 64, 64);
     const material = new THREE.MeshStandardMaterial({
@@ -159,7 +169,6 @@ export const MercuryScene = () => {
       roughness: 0.5,
       map: photoTexture,
       bumpScale: 0.02,
-      vertexColors: showHabitableZones,
     });
 
     const mercury = new THREE.Mesh(geometry, material);
@@ -301,7 +310,7 @@ export const MercuryScene = () => {
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [isZoomedOnMars, showHabitableZones]);
+  }, [isZoomedOnMars, showHabitableZones, currentTexture]);
 
   return (
     <div className="mercury-scene" ref={containerRef}>
@@ -318,12 +327,20 @@ export const MercuryScene = () => {
             : "La planète la plus petite et la plus proche du Soleil"}
         </p>
       </div>
-      <button
-        className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
-        onClick={() => setShowHabitableZones(!showHabitableZones)}
-      >
-        {showHabitableZones ? 'Cacher zones habitables' : 'Montrer zones habitables'}
-      </button>
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-4">
+        <button
+          className="bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+          onClick={() => setCurrentTexture(currentTexture === '/moon_baseColor.jpeg' ? '/mercure_map.jpg' : '/moon_baseColor.jpeg')}
+        >
+          {currentTexture === '/moon_baseColor.jpeg' ? 'Vue Topographique' : 'Vue Standard'}
+        </button>
+        <button
+          className="bg-white text-black px-4 py-2 rounded-md shadow-lg hover:bg-gray-100 transition-colors"
+          onClick={() => setShowHabitableZones(!showHabitableZones)}
+        >
+          {showHabitableZones ? 'Cacher zones habitables' : 'Montrer zones habitables'}
+        </button>
+      </div>
       <div className="stats-grid">
         <div className="stat-card">
           <div className="text-sm text-muted-foreground">Diamètre</div>
