@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
@@ -66,7 +67,7 @@ export const MercuryScene = () => {
       canvas.height = image.height;
       ctx.drawImage(image, 0, 0);
 
-      const chunkSize = 256;
+      const chunkSize = 32;
       const numChunksX = Math.floor(canvas.width / chunkSize);
       const numChunksY = Math.floor(canvas.height / chunkSize);
 
@@ -117,7 +118,7 @@ export const MercuryScene = () => {
         if (chunkAverage.brightness > 140 && chunkAverage.brightness < 160) {
           vertexColor = new THREE.Color(0x00ff00).multiplyScalar(2.5);
         } else {
-          vertexColor = new THREE.Color(0x080808);
+          vertexColor = new THREE.Color('#ea384c');
         }
 
         colors[vertexIndex * 3] = vertexColor.r;
