@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export const MercuryScene = () => {
   const containerRef = useRef(null);
@@ -45,14 +46,24 @@ export const MercuryScene = () => {
     directionalLight.position.set(5, 3, 5);
     scene.add(directionalLight);
 
-    // TODO: Ajouter la planète Mercury ici
-    // Exemple:
-    // const mercuryGeometry = new THREE.SphereGeometry(1, 32, 32);
-    // const mercuryMaterial = new THREE.MeshStandardMaterial({ 
-    //   map: new THREE.TextureLoader().load('/mercury-texture.jpg')
-    // });
-    // const mercuryMesh = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
-    // scene.add(mercuryMesh);
+    // Load GLTF Model
+    const loader = new GLTFLoader();
+    loader.load(
+      '/model/boule.gltf', // Le chemin vers votre fichier GLTF
+      (gltf) => {
+        scene.add(gltf.scene);
+        gltf.scene.scale.set(0.5, 0.5, 0.5); // Ajustez l'échelle selon vos besoins
+        gltf.scene.position.set(0, 0, 0); // Positionnez le modèle
+        setIsLoading(false);
+      },
+      (progress) => {
+        console.log('Loading progress:', (progress.loaded / progress.total) * 100, '%');
+      },
+      (error) => {
+        console.error('Error loading GLTF model:', error);
+        setIsLoading(false);
+      }
+    );
 
     // Animation loop
     const animate = () => {
@@ -62,7 +73,6 @@ export const MercuryScene = () => {
     };
 
     animate();
-    setIsLoading(false);
 
     // Handle resize
     const handleResize = () => {
@@ -127,4 +137,3 @@ export const MercuryScene = () => {
     </div>
   );
 };
-
